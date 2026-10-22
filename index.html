@@ -827,12 +827,15 @@ async function initApp() {
 
 /* ── Screens ───────────────────────────────────────────── */
 function showScreen(name) {
+  // Perlu set display eksplisit karena CSS class pakai display:none sebagai default
+  const displayMap = { login: 'flex', home: 'block', list: 'flex' };
   ['login', 'home', 'list'].forEach(s => {
     const el = document.getElementById('screen-' + s);
-    if (el) el.style.display = (s === name) ? '' : 'none';
+    if (el) el.style.display = (s === name) ? (displayMap[s] || 'block') : 'none';
   });
   if (name === 'list') {
-    document.getElementById('logout-btn').style.display = 'block';
+    const lb = document.getElementById('logout-btn');
+    if (lb) lb.style.display = 'block';
   }
 }
 
