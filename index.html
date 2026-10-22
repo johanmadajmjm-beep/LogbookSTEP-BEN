@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <style>
 /* ── Index-specific styles ─────────────────────────────── */
 
@@ -96,52 +98,64 @@
   margin-bottom: 20px;
 }
 
-.pin-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-  margin-bottom: 8px;
-}
-.pin-dot {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--color-border);
-  transition: background .2s;
-}
-.pin-dot.filled { background: var(--color-teal-600); }
-
-.pin-numpad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 16px;
-}
-.pin-key {
-  height: 56px;
+.login-btn {
+  width: 100%;
+  padding: 15px;
   border: none;
   border-radius: 14px;
-  background: var(--color-surface-raised);
-  font-family: var(--font-ui);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background .12s, transform .08s;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-.pin-key:active { background: var(--color-teal-50); transform: scale(.96); }
-.pin-key.del   { font-size: 14px; color: var(--color-text-muted); }
-.pin-key.go    {
   background: var(--color-teal-600);
   color: #fff;
-  font-size: 14px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
 }
-.pin-key.go:active { background: var(--color-teal-700); }
-.pin-key.go:disabled { opacity: .4; }
+.login-btn:active { background: var(--color-teal-700); transform: scale(.98); }
+.login-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
-/* SCN selector pills */
+.pwd-wrap {
+  position: relative;
+}
+.pwd-wrap .form-input { padding-right: 44px; }
+.pwd-eye {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  border: none; background: none;
+  font-size: 18px; cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.login-error {
+  background: rgba(220,53,69,.08);
+  border: 1px solid rgba(220,53,69,.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 14px;
+  display: none;
+}
+.login-error.show { display: block; }
+
+.daftar-link {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.daftar-link a {
+  color: var(--color-teal-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* SCN selector pills — kept for potential reuse */
 .scn-pills {
   display: flex;
   flex-wrap: wrap;
@@ -481,53 +495,33 @@
   <div class="login-card">
     <div class="login-card-title">Masuk ke akun Anda</div>
 
-    <!-- Nama -->
+    <div class="login-error" id="login-error"></div>
+
+    <!-- Email -->
     <div class="form-group">
-      <label class="form-label">Nama Petugas CBR</label>
-      <input id="login-nama" class="form-input" type="text"
-             placeholder="Cth: Jack Roka" autocomplete="off"
-             autocapitalize="words" spellcheck="false">
+      <label class="form-label">Alamat Email</label>
+      <input id="login-email" class="form-input" type="email"
+             placeholder="nama@email.com"
+             autocomplete="email" inputmode="email" spellcheck="false">
     </div>
 
-    <!-- SCN -->
+    <!-- Sandi -->
     <div class="form-group" style="margin-top:14px">
-      <label class="form-label">Pilih SCN</label>
-      <div class="scn-pills" id="scn-pills">
-        <div class="scn-pill" data-value="SCN Manggarai">Manggarai</div>
-        <div class="scn-pill" data-value="SCN Kupang">Kupang</div>
-        <div class="scn-pill" data-value="SCN Timor Tengah Selatan">TTS</div>
-        <div class="scn-pill" data-value="SCN Banyuwangi">Banyuwangi</div>
-        <div class="scn-pill" data-value="SCN Jember">Jember</div>
-        <div class="scn-pill" data-value="SCN Situbondo">Situbondo</div>
-        <div class="scn-pill" data-value="SCN Palu">Palu</div>
-        <div class="scn-pill" data-value="SCN Sigi">Sigi</div>
+      <label class="form-label">Sandi</label>
+      <div class="pwd-wrap">
+        <input id="login-sandi" class="form-input" type="password"
+               placeholder="Masukkan sandi"
+               autocomplete="current-password">
+        <button class="pwd-eye" type="button" onclick="toggleLoginPwd()">👁</button>
       </div>
     </div>
 
-    <!-- PIN -->
-    <div class="form-group" style="margin-top:14px">
-      <label class="form-label">PIN (4 digit)</label>
-      <div class="pin-row" id="pin-row">
-        <div class="pin-dot" id="pd0"></div>
-        <div class="pin-dot" id="pd1"></div>
-        <div class="pin-dot" id="pd2"></div>
-        <div class="pin-dot" id="pd3"></div>
-      </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">
+      Masuk
+    </button>
 
-      <div class="pin-numpad">
-        <button class="pin-key" data-num="1">1</button>
-        <button class="pin-key" data-num="2">2</button>
-        <button class="pin-key" data-num="3">3</button>
-        <button class="pin-key" data-num="4">4</button>
-        <button class="pin-key" data-num="5">5</button>
-        <button class="pin-key" data-num="6">6</button>
-        <button class="pin-key" data-num="7">7</button>
-        <button class="pin-key" data-num="8">8</button>
-        <button class="pin-key" data-num="9">9</button>
-        <button class="pin-key del" id="pin-del">⌫</button>
-        <button class="pin-key" data-num="0">0</button>
-        <button class="pin-key go" id="pin-go" disabled>Masuk</button>
-      </div>
+    <div class="daftar-link">
+      Belum punya akun? <a href="signup.html">Daftar di sini</a>
     </div>
 
     <p style="font-size:11px;color:var(--color-text-muted);text-align:center;margin-top:16px;line-height:1.5">
@@ -749,64 +743,69 @@
 <script>
 'use strict';
 
-/* ── PIN logic ─────────────────────────────────────────── */
-let pin = '';
-const PIN_LEN = 4;
-
-document.querySelectorAll('.pin-key[data-num]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (pin.length >= PIN_LEN) return;
-    pin += btn.dataset.num;
-    updatePinDots();
-  });
-});
-document.getElementById('pin-del').addEventListener('click', () => {
-  pin = pin.slice(0, -1);
-  updatePinDots();
-});
-document.getElementById('pin-go').addEventListener('click', doLogin);
-
-function updatePinDots() {
-  for (let i = 0; i < PIN_LEN; i++) {
-    document.getElementById('pd' + i).classList.toggle('filled', i < pin.length);
-  }
-  document.getElementById('pin-go').disabled = pin.length < PIN_LEN ||
-    !document.getElementById('login-nama').value.trim() ||
-    !selectedSCN;
+/* ── Password toggle ───────────────────────────────────── */
+function toggleLoginPwd() {
+  const inp = document.getElementById('login-sandi');
+  const btn = inp.nextElementSibling;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
 }
 
-document.getElementById('login-nama').addEventListener('input', updatePinDots);
-
-/* SCN pills */
-let selectedSCN = '';
-document.querySelectorAll('.scn-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.scn-pill').forEach(p => p.classList.remove('selected'));
-    pill.classList.add('selected');
-    selectedSCN = pill.dataset.value;
-    updatePinDots();
-  });
-});
+/* ── Login error ───────────────────────────────────────── */
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideLoginError() {
+  document.getElementById('login-error').classList.remove('show');
+}
 
 /* ── Login ─────────────────────────────────────────────── */
-const VALID_PIN = '1234'; // TODO: ganti dengan autentikasi proper
-
 async function doLogin() {
-  const nama = document.getElementById('login-nama').value.trim();
-  if (!nama || !selectedSCN || pin.length !== PIN_LEN) {
-    MDB.showToast('⚠️ Lengkapi nama, SCN, dan PIN');
-    return;
-  }
-  if (pin !== VALID_PIN) {
-    MDB.showToast('⚠️ PIN salah. Coba lagi.');
-    pin = '';
-    updatePinDots();
-    return;
-  }
+  hideLoginError();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const sandi = document.getElementById('login-sandi').value;
 
-  MDB.setSession({ nama, scn: selectedSCN, ts: new Date().toISOString() });
-  await initApp();
+  if (!email || !email.includes('@')) { showLoginError('⚠️ Masukkan alamat email yang valid'); return; }
+  if (!sandi) { showLoginError('⚠️ Masukkan sandi'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Memeriksa…';
+
+  try {
+    const data = await MDB.signIn(email, sandi);
+    const user = data.user;
+
+    // Ambil profil dari Supabase
+    let nama = email.split('@')[0];
+    let scn  = '';
+    if (user) {
+      const profile = await MDB.getProfile(user.id);
+      if (profile) { nama = profile.nama_lengkap; scn = profile.scn; }
+    }
+
+    MDB.setSession({ nama, scn, email, ts: new Date().toISOString() });
+    await initApp();
+
+  } catch (err) {
+    let msg = err.message || 'Login gagal';
+    if (msg.includes('Invalid login') || msg.includes('invalid_credentials') || msg.includes('Email not confirmed')) {
+      msg = 'Email atau sandi salah. Periksa kembali.';
+    }
+    showLoginError('❌ ' + msg);
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+  }
 }
+
+/* ── Enter key support ─────────────────────────────────── */
+['login-email','login-sandi'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
 
 /* ── Session restore ───────────────────────────────────── */
 async function initApp() {
@@ -861,13 +860,13 @@ function showProfile() {
 }
 
 /* ── Logout ────────────────────────────────────────────── */
-function doLogout() {
+async function doLogout() {
   if (!confirm('Keluar dari aplikasi? Data draft lokal tetap tersimpan di perangkat ini.')) return;
+  await MDB.signOut();
   MDB.clearSession();
-  pin = ''; selectedSCN = '';
-  document.getElementById('login-nama').value = '';
-  document.querySelectorAll('.scn-pill').forEach(p => p.classList.remove('selected'));
-  updatePinDots();
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-sandi').value = '';
+  hideLoginError();
   showScreen('login');
 }
 

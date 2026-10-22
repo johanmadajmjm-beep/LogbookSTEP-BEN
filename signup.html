@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#006B5E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Logbook STEP BEN">
+<link rel="manifest" href="manifest.json">
+<title>Daftar Akun — Logbook STEP BEN</title>
+<script src="./sw-register.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+
+<style>
+.signup-screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-teal-600);
+  position: relative;
+  overflow: hidden;
+}
+.signup-screen::before {
+  content: '';
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  top: -60px; right: -60px;
+  pointer-events: none;
+}
+.signup-hero {
+  padding: calc(env(safe-area-inset-top,0px) + 32px) 24px 20px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.signup-hero-back {
+  width: 40px; height: 40px;
+  border: none;
+  background: rgba(255,255,255,.18);
+  border-radius: 12px;
+  font-size: 18px;
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  -webkit-tap-highlight-color: transparent;
+}
+.signup-hero-text { flex: 1; }
+.signup-hero-title {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.signup-hero-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,.72);
+}
+
+.signup-card {
+  flex: 1;
+  background: var(--color-surface);
+  border-radius: 24px 24px 0 0;
+  padding: 28px 20px calc(env(safe-area-inset-bottom,0px) + 32px);
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.12);
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.scn-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.scn-tile {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: var(--color-surface);
+  text-align: center;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.scn-tile:active { transform: scale(.97); }
+.scn-tile.selected {
+  background: var(--color-teal-50);
+  border-color: var(--color-teal-600);
+  color: var(--color-teal-700);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 20px 0;
+}
+
+.signup-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-teal-600);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 8px;
+}
+.signup-btn:active  { background: var(--color-teal-700); transform: scale(.98); }
+.signup-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.login-link a {
+  color: var(--color-teal-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.password-wrap {
+  position: relative;
+}
+.password-wrap .form-input {
+  padding-right: 44px;
+}
+.pwd-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--color-text-muted);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pwd-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.pwd-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-border);
+  transition: background .2s;
+}
+.pwd-bar.weak   { background: #e53935; }
+.pwd-bar.medium { background: #f59e0b; }
+.pwd-bar.strong { background: #3bad6e; }
+
+.error-msg {
+  background: rgba(220,53,69,.08);
+  border: 1px solid rgba(220,53,69,.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 16px;
+  display: none;
+}
+.error-msg.show { display: block; }
+
+.success-msg {
+  background: rgba(59,173,110,.08);
+  border: 1px solid rgba(59,173,110,.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #1A5C35;
+  margin-bottom: 16px;
+  display: none;
+  line-height: 1.5;
+}
+.success-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="signup-screen">
+
+  <!-- Hero -->
+  <div class="signup-hero">
+    <button class="signup-hero-back" onclick="window.location.href='index.html'">‹</button>
+    <div class="signup-hero-text">
+      <div class="signup-hero-title">Buat Akun CBR</div>
+      <div class="signup-hero-sub">Daftarkan diri sebagai petugas CBR</div>
+    </div>
+  </div>
+
+  <!-- Card -->
+  <div class="signup-card">
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <!-- Identitas -->
+    <div class="section-label">Identitas Petugas CBR</div>
+
+    <div class="form-group">
+      <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+      <input id="f-nama" class="form-input" type="text"
+             placeholder="Cth: Jack Roka"
+             autocapitalize="words" autocomplete="name" spellcheck="false">
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">SCN <span class="req">*</span></label>
+      <div class="scn-select-grid" id="scn-grid">
+        <div class="scn-tile" data-value="Manggarai">Manggarai</div>
+        <div class="scn-tile" data-value="Kupang">Kupang</div>
+        <div class="scn-tile" data-value="TTS">TTS</div>
+        <div class="scn-tile" data-value="Banyuwangi">Banyuwangi</div>
+        <div class="scn-tile" data-value="Jember">Jember</div>
+        <div class="scn-tile" data-value="Situbondo">Situbondo</div>
+        <div class="scn-tile" data-value="Palu">Palu</div>
+        <div class="scn-tile" data-value="Sigi">Sigi</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Akun -->
+    <div class="section-label">Akun Login</div>
+
+    <div class="form-group">
+      <label class="form-label">Alamat Email <span class="req">*</span></label>
+      <input id="f-email" class="form-input" type="email"
+             placeholder="nama@email.com"
+             autocomplete="email" spellcheck="false"
+             inputmode="email">
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Buat Sandi <span class="req">*</span></label>
+      <div class="password-wrap">
+        <input id="f-sandi" class="form-input" type="password"
+               placeholder="Minimal 8 karakter"
+               autocomplete="new-password"
+               oninput="checkPwdStrength(this.value)">
+        <button class="pwd-toggle" type="button" onclick="togglePwd('f-sandi',this)">👁</button>
+      </div>
+      <div class="pwd-strength" id="pwd-bars">
+        <div class="pwd-bar" id="pb1"></div>
+        <div class="pwd-bar" id="pb2"></div>
+        <div class="pwd-bar" id="pb3"></div>
+        <div class="pwd-bar" id="pb4"></div>
+      </div>
+      <div class="form-hint" id="pwd-hint">Minimal 8 karakter</div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Konfirmasi Sandi <span class="req">*</span></label>
+      <div class="password-wrap">
+        <input id="f-sandi2" class="form-input" type="password"
+               placeholder="Ulangi sandi"
+               autocomplete="new-password">
+        <button class="pwd-toggle" type="button" onclick="togglePwd('f-sandi2',this)">👁</button>
+      </div>
+    </div>
+
+    <button class="signup-btn" id="signup-btn" onclick="doSignup()">
+      Buat Akun
+    </button>
+
+    <div class="login-link">
+      Sudah punya akun? <a href="index.html">Masuk di sini</a>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+'use strict';
+
+let selectedSCN = '';
+
+/* ── SCN tile selection ─────────────────────────────────── */
+document.querySelectorAll('.scn-tile').forEach(tile => {
+  tile.addEventListener('click', () => {
+    document.querySelectorAll('.scn-tile').forEach(t => t.classList.remove('selected'));
+    tile.classList.add('selected');
+    selectedSCN = tile.dataset.value;
+  });
+});
+
+/* ── Password visibility toggle ────────────────────────── */
+function togglePwd(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+/* ── Password strength ──────────────────────────────────── */
+function checkPwdStrength(val) {
+  const bars = ['pb1','pb2','pb3','pb4'];
+  const hint = document.getElementById('pwd-hint');
+  bars.forEach(id => {
+    const b = document.getElementById(id);
+    b.className = 'pwd-bar';
+  });
+
+  if (!val) { hint.textContent = 'Minimal 8 karakter'; return; }
+
+  let score = 0;
+  if (val.length >= 8)  score++;
+  if (val.length >= 12) score++;
+  if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+  if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score++;
+
+  const cls = score <= 1 ? 'weak' : score <= 2 ? 'medium' : 'strong';
+  const labels = { weak: 'Lemah', medium: 'Sedang', strong: 'Kuat' };
+  for (let i = 0; i < score; i++) {
+    document.getElementById(bars[i]).classList.add(cls);
+  }
+  hint.textContent = 'Kekuatan sandi: ' + labels[cls];
+}
+
+/* ── Show error / success ───────────────────────────────── */
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('success-msg').classList.remove('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('success-msg');
+  el.innerHTML = msg;
+  el.classList.add('show');
+  document.getElementById('error-msg').classList.remove('show');
+}
+function hideMessages() {
+  document.getElementById('error-msg').classList.remove('show');
+  document.getElementById('success-msg').classList.remove('show');
+}
+
+/* ── Signup ─────────────────────────────────────────────── */
+async function doSignup() {
+  hideMessages();
+
+  const nama  = document.getElementById('f-nama').value.trim();
+  const email = document.getElementById('f-email').value.trim().toLowerCase();
+  const sandi = document.getElementById('f-sandi').value;
+  const sandi2 = document.getElementById('f-sandi2').value;
+
+  // Validasi
+  if (!nama)        { showError('⚠️ Nama lengkap wajib diisi'); return; }
+  if (!selectedSCN) { showError('⚠️ Pilih SCN terlebih dahulu'); return; }
+  if (!email || !email.includes('@')) { showError('⚠️ Masukkan alamat email yang valid'); return; }
+  if (sandi.length < 8) { showError('⚠️ Sandi minimal 8 karakter'); return; }
+  if (sandi !== sandi2) { showError('⚠️ Konfirmasi sandi tidak cocok'); return; }
+
+  const btn = document.getElementById('signup-btn');
+  btn.disabled = true;
+  btn.textContent = 'Membuat akun…';
+
+  try {
+    await MDB.signUp(email, sandi, nama, selectedSCN);
+
+    // Simpan session lokal setelah daftar
+    MDB.setSession({
+      nama,
+      scn: selectedSCN,
+      email,
+      ts: new Date().toISOString(),
+    });
+
+    showSuccess(
+      '✅ <strong>Akun berhasil dibuat!</strong><br>' +
+      'Selamat datang, ' + nama + '. Mengalihkan ke beranda…'
+    );
+
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1800);
+
+  } catch (err) {
+    let msg = err.message || 'Terjadi kesalahan';
+    // Terjemahkan pesan Supabase
+    if (msg.includes('already registered') || msg.includes('User already registered')) {
+      msg = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+    } else if (msg.includes('invalid email')) {
+      msg = 'Format email tidak valid.';
+    } else if (msg.includes('weak password') || msg.includes('Password should be')) {
+      msg = 'Sandi terlalu lemah. Gunakan kombinasi huruf, angka, dan simbol.';
+    }
+    showError('❌ ' + msg);
+    btn.disabled = false;
+    btn.textContent = 'Buat Akun';
+  }
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+(async function init() {
+  await MDB.openDB();
+  // Jika sudah login, langsung ke home
+  const session = MDB.getSession();
+  if (session && session.email) {
+    window.location.href = 'index.html';
+  }
+})();
+</script>
+</body>
+</html>

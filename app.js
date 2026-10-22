@@ -2,12 +2,80 @@
    MasterDB SCN — Shared App Logic
    • IndexedDB (offline storage)
    • Session (login state)
+   • Supabase Auth (cloud authentication)
    • Toast / Sync overlay helpers
    • GPS capture
    • Photo compression
 ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
+
+/* ─── Supabase Config ────────────────────────────────────────── */
+const SUPABASE_URL  = 'https://qwqhahtijeknibsgdzas.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3cWhhaHRpamVrbmlic2dkemFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2NDg2OTQsImV4cCI6MjEwODIyNDY5NH0.FTtORO0mf5_gTvvzv2lCkgvDcq4vyMZlHF4t4Q9oVUg';
+
+/* Lazy-loaded Supabase client — inisialisasi saat pertama dibutuhkan */
+let _supabase = null;
+function getSupabase() {
+  if (_supabase) return _supabase;
+  if (typeof window.supabase !== 'undefined') {
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    return _supabase;
+  }
+  return null;
+}
+
+/* ─── Supabase Auth helpers ──────────────────────────────────── */
+async function signUp(email, password, nama, scn) {
+  const sb = getSupabase();
+  if (!sb) throw new Error('Supabase tidak tersedia');
+
+  // 1. Daftar ke Supabase Auth
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) throw error;
+
+  // 2. Simpan profil CBR ke tabel cbr_profiles
+  const userId = data.user?.id;
+  if (userId) {
+    const { error: profErr } = await sb
+      .from('cbr_profiles')
+      .insert({ id: userId, nama_lengkap: nama, scn });
+    if (profErr) console.warn('Profile insert error:', profErr.message);
+  }
+
+  return data;
+}
+
+async function signIn(email, password) {
+  const sb = getSupabase();
+  if (!sb) throw new Error('Supabase tidak tersedia');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+async function signOut() {
+  const sb = getSupabase();
+  if (sb) await sb.auth.signOut();
+}
+
+async function getSupabaseUser() {
+  const sb = getSupabase();
+  if (!sb) return null;
+  const { data } = await sb.auth.getUser();
+  return data?.user || null;
+}
+
+async function getProfile(userId) {
+  const sb = getSupabase();
+  if (!sb) return null;
+  const { data } = await sb
+    .from('cbr_profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  return data;
+}
 
 /* ─── IndexedDB ──────────────────────────────────────────────── */
 const DB_NAME    = 'masterdb_scn';
@@ -385,6 +453,8 @@ window.MDB = {
   openDB, dbGet, dbGetAll, dbPut, dbDelete,
   // Session
   getSession, setSession, clearSession, requireLogin,
+  // Supabase Auth
+  getSupabase, signUp, signIn, signOut, getSupabaseUser, getProfile,
   // UI helpers
   showToast, showSync, hideSync,
   // GPS
