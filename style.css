@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   MasterDB SCN — Shared Stylesheet
+   Logbook STEP BEN — Shared Stylesheet
    Design tokens → components → utilities
 ═══════════════════════════════════════════════════════════════ */
 
@@ -39,6 +39,17 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left:   env(safe-area-inset-left, 0px);
   --safe-right:  env(safe-area-inset-right, 0px);
+
+  /* ── Alias untuk index.html (--color-* namespace) ── */
+  --color-teal-50:   #E8F5F4;
+  --color-teal-100:  rgba(30,122,114,.15);
+  --color-teal-600:  #1E7A72;
+  --color-teal-700:  #165E58;
+  --color-surface:        #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-border:    #D6E4E2;
+  --color-text:      #1A2B2A;
+  --color-text-muted: #7A9693;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -61,6 +72,16 @@
     --fg-mid:      #B0C8C5;
     --fg-muted:    #5C8080;
     color-scheme: dark;
+
+    --color-teal-50:   #0D2E2C;
+    --color-teal-100:  rgba(42,179,168,.15);
+    --color-teal-600:  #2AB3A8;
+    --color-teal-700:  #1E8A82;
+    --color-surface:        #162320;
+    --color-surface-raised: #1E2F2D;
+    --color-border:    #2A3D3B;
+    --color-text:      #E8F0EF;
+    --color-text-muted: #5C8080;
   }
 }
 :root[data-theme="dark"] {
@@ -82,6 +103,16 @@
   --fg-mid:      #B0C8C5;
   --fg-muted:    #5C8080;
   color-scheme: dark;
+
+  --color-teal-50:   #0D2E2C;
+  --color-teal-100:  rgba(42,179,168,.15);
+  --color-teal-600:  #2AB3A8;
+  --color-teal-700:  #1E8A82;
+  --color-surface:        #162320;
+  --color-surface-raised: #1E2F2D;
+  --color-border:    #2A3D3B;
+  --color-text:      #E8F0EF;
+  --color-text-muted: #5C8080;
 }
 
 /* ─── Reset ──────────────────────────────────────────────────── */
@@ -513,4 +544,13 @@ a { color: var(--teal); text-decoration: none; }
 .text-sm { font-size: 13px; }
 .font-ui { font-family: var(--font-ui); }
 .font-bold { font-weight: 700; }
-.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* ─── Empty state ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--fg-muted);
+}
+.empty-state-icon  { font-size: 48px; margin-bottom: 12px; }
+.empty-state-title { font-family: var(--font-ui); font-size: 16px; font-weight: 700; color: var(--fg-mid); margin-bottom: 6px; }
+.empty-state-desc  { font-size: 14px; line-height: 1.5; }
