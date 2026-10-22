@@ -1,12 +1,13 @@
 // MasterDB SCN — Service Worker
 // Strategi: Cache-first untuk assets statis, Network-first untuk data
 
-const CACHE_NAME = 'masterdb-scn-v1';
-const CACHE_VERSION = 1;
+const CACHE_NAME = 'masterdb-scn-v2';
+const CACHE_VERSION = 2;
 
 // File yang di-cache saat install
 const PRECACHE_URLS = [
   './index.html',
+  './signup.html',
   './profil.html',
   './observasi.html',
   './irp.html',
