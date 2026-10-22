@@ -1,8 +1,11 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Evaluasi Tahap Akhir</title>
 <link rel="manifest" href="./manifest.json">
 <script src="./sw-register.js" defer></script>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root {
   --bg: #F8F9FA; --card: #FFFFFF; --fg: #1A1A2E; --fg2: #5A5A7A;
@@ -209,7 +212,8 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.error { background: var(--red); }
 </style>
-
+</head>
+<body>
 <!-- Header -->
 <div class="top-bar">
   <button class="top-bar-back" onclick="goBack()">←</button>
@@ -794,3 +798,5 @@ async function loadRecord(id) {
 function goBack() { history.back(); }
 initApp();
 </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Evaluasi Jangka Menengah</title>
 <link rel="manifest" href="./manifest.json">
 <script src="./sw-register.js" defer></script>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root {
   --bg: #F8F9FA;
@@ -255,7 +258,8 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .status-draft { background: var(--yellow-light); color: var(--yellow); }
 .status-aktif { background: var(--green-light); color: var(--green); }
 </style>
-
+</head>
+<body>
 <!-- Header -->
 <div class="top-bar" id="topBar">
   <button class="top-bar-back" onclick="goBack()">←</button>
@@ -1026,3 +1030,5 @@ function goBack() { history.back(); }
 // Boot
 initApp();
 </script>
+</body>
+</html>
