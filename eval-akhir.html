@@ -1,0 +1,796 @@
+<title>Evaluasi Tahap Akhir</title>
+<link rel="manifest" href="./manifest.json">
+<script src="./sw-register.js" defer></script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #F8F9FA; --card: #FFFFFF; --fg: #1A1A2E; --fg2: #5A5A7A;
+  --border: #E2E4EC; --accent: #1B6CA8; --accent-light: #E8F1F9;
+  --t1: #1B6CA8; --t1-light: #E8F1F9; --t1-chip: #B8D4EE;
+  --t2: #7B3FA0; --t2-light: #F3EBF9; --t2-chip: #D9C2EE;
+  --t3: #B05C1A; --t3-light: #FBF0E7; --t3-chip: #EDCFAB;
+  --green: #1A7A4A; --green-light: #E6F5EC;
+  --red: #B91C1C; --red-light: #FEF2F2;
+  --yellow: #854D0E; --yellow-light: #FEF9C3;
+  --shadow: 0 1px 4px rgba(0,0,0,.07); --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1117; --card: #1C1F2E; --fg: #E8E9F0; --fg2: #9A9BB8;
+    --border: #2E3148; --accent: #4A9FD8; --accent-light: #172235;
+    --t1: #4A9FD8; --t1-light: #172235; --t1-chip: #1E3A5A;
+    --t2: #B07FD0; --t2-light: #221435; --t2-chip: #3A1F5A;
+    --t3: #D08050; --t3-light: #251408; --t3-chip: #4A2A10;
+    --green: #4ABA7A; --green-light: #0D2A1A;
+    --red: #F87171; --red-light: #2D1010;
+    --yellow: #FBC74A; --yellow-light: #2A2005;
+    --shadow: 0 1px 4px rgba(0,0,0,.3); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1117; --card: #1C1F2E; --fg: #E8E9F0; --fg2: #9A9BB8;
+  --border: #2E3148; --accent: #4A9FD8; --accent-light: #172235;
+  --t1: #4A9FD8; --t1-light: #172235; --t1-chip: #1E3A5A;
+  --t2: #B07FD0; --t2-light: #221435; --t2-chip: #3A1F5A;
+  --t3: #D08050; --t3-light: #251408; --t3-chip: #4A2A10;
+  --green: #4ABA7A; --green-light: #0D2A1A;
+  --red: #F87171; --red-light: #2D1010;
+  --yellow: #FBC74A; --yellow-light: #2A2005;
+  --shadow: 0 1px 4px rgba(0,0,0,.3); color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg); color: var(--fg);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0; font-size: 15px; line-height: 1.6;
+}
+.top-bar {
+  position: sticky; top: env(safe-area-inset-top, 0px);
+  background: var(--accent); color: #fff;
+  padding: 12px max(16px, env(safe-area-inset-left, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; gap: 10px;
+  z-index: 100; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+body::before {
+  content: ''; position: fixed; inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--accent); z-index: 101;
+}
+.top-bar-back { background: none; border: none; color: #fff; cursor: pointer; font-size: 20px; padding: 4px; }
+.top-bar-title { font-size: 17px; font-weight: 600; flex: 1; }
+.top-bar-subtitle { font-size: 12px; opacity: .8; }
+.offline-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ABA7A; flex-shrink: 0; }
+.offline-dot.offline { background: #F87171; }
+.page-body { padding-block: 16px; display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border); gap: 10px;
+}
+.card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex: 1; }
+.toggle-btn { font-size: 18px; color: var(--fg2); transition: transform .2s; flex-shrink: 0; }
+.card-body { padding: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-group:last-child { margin-bottom: 0; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--fg2); margin-bottom: 6px; letter-spacing: .03em; text-transform: uppercase; }
+label span.req { color: var(--red); margin-left: 3px; }
+input[type="text"], input[type="date"], select, textarea {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: 8px; background: var(--bg); color: var(--fg);
+  font-family: inherit; font-size: 15px; transition: border-color .15s; -webkit-appearance: none;
+}
+input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+textarea { resize: vertical; min-height: 85px; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235A5A7A' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 400px) { .row-2 { grid-template-columns: 1fr; } }
+
+/* Anak info */
+.anak-info-card { background: var(--accent-light); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.anak-info-card .anak-name { font-size: 17px; font-weight: 700; color: var(--accent); }
+.anak-info-card .anak-meta { font-size: 13px; color: var(--fg2); }
+.anak-select-prompt { text-align: center; padding: 24px; color: var(--fg2); font-size: 14px; }
+
+/* IRP ref */
+.irp-not-found { color: var(--fg2); font-size: 14px; font-style: italic; }
+.irp-summary-box { background: var(--bg); border-radius: 10px; border: 1.5px solid var(--border); padding: 14px; }
+.irp-summary-label { font-size: 12px; font-weight: 600; color: var(--fg2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+
+/* Tujuan cards */
+.tujuan-card { border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.tujuan-card:last-child { margin-bottom: 0; }
+.tujuan-header { padding: 12px 14px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.tujuan-header .tujuan-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.tujuan-header .tujuan-toggle { margin-left: auto; font-size: 18px; transition: transform .2s; }
+.tujuan-body { padding: 14px; border-top: 1px solid rgba(255,255,255,.15); }
+.tujuan-ref-box { border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 14px; }
+.tujuan-ref-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; opacity: .8; }
+.t1-card { background: var(--t1-light); border: 1.5px solid var(--t1-chip); }
+.t1-header { background: var(--t1); color: #fff; }
+.t1-num { background: rgba(255,255,255,.3); }
+.t1-ref { background: var(--t1-chip); color: var(--t1); }
+.t2-card { background: var(--t2-light); border: 1.5px solid var(--t2-chip); }
+.t2-header { background: var(--t2); color: #fff; }
+.t2-num { background: rgba(255,255,255,.3); }
+.t2-ref { background: var(--t2-chip); color: var(--t2); }
+.t3-card { background: var(--t3-light); border: 1.5px solid var(--t3-chip); }
+.t3-header { background: var(--t3); color: #fff; }
+.t3-num { background: rgba(255,255,255,.3); }
+.t3-ref { background: var(--t3-chip); color: var(--t3); }
+.tujuan-body textarea, .tujuan-body input[type="text"] { background: var(--card); border-color: var(--border); }
+.t1-card .tujuan-body textarea:focus { border-color: var(--t1); }
+.t2-card .tujuan-body textarea:focus { border-color: var(--t2); }
+.t3-card .tujuan-body textarea:focus { border-color: var(--t3); }
+
+/* Tercapai toggle */
+.tercapai-toggle { display: flex; gap: 10px; margin-bottom: 14px; }
+.tcbtn {
+  flex: 1; padding: 11px 8px; border-radius: 10px; border: 2px solid var(--border);
+  background: var(--card); color: var(--fg2); font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; text-align: center; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.tcbtn:hover { border-color: var(--accent); }
+.tcbtn.ya.selected { background: var(--green); border-color: var(--green); color: #fff; }
+.tcbtn.tidak.selected { background: var(--red); border-color: var(--red); color: #fff; }
+.t1-card .tcbtn:hover { border-color: var(--t1); }
+.t2-card .tcbtn:hover { border-color: var(--t2); }
+.t3-card .tcbtn:hover { border-color: var(--t3); }
+
+/* Conditional fields */
+.cond-group { display: none; }
+.cond-group.visible { display: block; }
+.q-group { margin-bottom: 16px; }
+.q-group:last-child { margin-bottom: 0; }
+.q-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+
+/* Hasil summary badge */
+.hasil-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;
+  margin-top: 8px;
+}
+.hasil-ya { background: var(--green-light); color: var(--green); }
+.hasil-tidak { background: var(--red-light); color: var(--red); }
+
+/* Foto */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-top: 10px; }
+.photo-thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb .del-photo { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.55); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.photo-add-btn { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1.5px dashed var(--border); border-radius: 8px; background: none; color: var(--fg2); font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; }
+.photo-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* GPS */
+.gps-widget { display: flex; flex-direction: column; gap: 8px; }
+.gps-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gps-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--card); color: var(--fg); font-size: 14px; cursor: pointer; font-family: inherit; }
+.gps-btn:hover { border-color: var(--accent); color: var(--accent); }
+.gps-badge { font-size: 12px; background: var(--green-light); color: var(--green); padding: 4px 10px; border-radius: 20px; display: none; font-weight: 600; }
+.gps-badge.visible { display: inline-flex; }
+.gps-loading { font-size: 13px; color: var(--fg2); display: none; align-items: center; gap: 6px; }
+.gps-loading.visible { display: flex; }
+
+/* Summary panel */
+.summary-panel {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.summary-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
+.summary-tujuan { color: var(--fg2); font-size: 13px; flex: 1; }
+.summary-result { font-size: 13px; font-weight: 700; }
+.summary-ya { color: var(--green); }
+.summary-tidak { color: var(--red); }
+
+/* Actions */
+.action-bar { display: flex; gap: 10px; padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
+.btn { flex: 1; padding: 13px 16px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+.btn:active { opacity: .8; }
+.btn-draft { background: var(--card); color: var(--accent); border: 2px solid var(--accent); }
+.btn-save { background: var(--accent); color: #fff; }
+
+/* Sync overlay */
+.sync-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 200; }
+.sync-overlay.visible { display: flex; }
+.sync-box { background: var(--card); border-radius: 14px; padding: 28px 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+.sync-spinner { width: 36px; height: 36px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-text { font-size: 15px; font-weight: 600; }
+.toast { position: fixed; bottom: max(28px, env(safe-area-inset-bottom, 20px)); left: 50%; transform: translateX(-50%) translateY(100px); background: #1A1A2E; color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 14px; white-space: nowrap; z-index: 300; transition: transform .3s; pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--red); }
+</style>
+
+<!-- Header -->
+<div class="top-bar">
+  <button class="top-bar-back" onclick="goBack()">←</button>
+  <div style="flex:1">
+    <div class="top-bar-title">Evaluasi Tahap Akhir</div>
+    <div class="top-bar-subtitle" id="topSubtitle">CBR Program BEN</div>
+  </div>
+  <div class="offline-dot" id="offlineDot"></div>
+</div>
+
+<div class="page-body">
+
+  <!-- Info Pendataan -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>📋</span> Info Pendataan</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="row-2">
+        <div class="form-group">
+          <label>SCN<span class="req">*</span></label>
+          <select id="scnId" onchange="onSCNChange()">
+            <option value="">-- Pilih SCN --</option>
+            <option value="SCN Manggarai">SCN Manggarai</option>
+            <option value="SCN Kupang">SCN Kupang</option>
+            <option value="SCN TTS">SCN TTS</option>
+            <option value="SCN Banyuwangi">SCN Banyuwangi</option>
+            <option value="SCN Jember">SCN Jember</option>
+            <option value="SCN Situbondo">SCN Situbondo</option>
+            <option value="SCN Palu">SCN Palu</option>
+            <option value="SCN Sigi">SCN Sigi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tanggal Evaluasi<span class="req">*</span></label>
+          <input type="date" id="tanggal">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>CBR Worker</label>
+        <input type="text" id="cbrWorker" placeholder="Nama CBR Worker">
+      </div>
+    </div>
+  </div>
+
+  <!-- Pilih Anak -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>👤</span> Pilih Anak</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Anak<span class="req">*</span></label>
+        <select id="anakSelect" onchange="onAnakChange()">
+          <option value="">-- Pilih SCN dulu --</option>
+        </select>
+      </div>
+      <div id="anakInfo">
+        <div class="anak-select-prompt">Pilih anak untuk melihat detail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ringkasan IRP -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>🎯</span> Ringkasan IRP</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div id="irpSummaryBox">
+        <div class="irp-not-found">Pilih anak terlebih dahulu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tujuan 1 -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>🔵</span> Evaluasi Tujuan 1</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="tujuan-card t1-card">
+        <div class="tujuan-header t1-header" onclick="toggleTujuan(1)">
+          <div class="tujuan-num t1-num">1</div>
+          <div id="t1HeaderText" style="flex:1">Tujuan 1</div>
+          <div class="tujuan-toggle" id="t1Toggle">▾</div>
+        </div>
+        <div class="tujuan-body" id="t1Body">
+          <div class="tujuan-ref-box t1-ref">
+            <div class="tujuan-ref-label">Tujuan dari IRP</div>
+            <div id="t1RefText" class="irp-not-found">Belum ada data IRP</div>
+          </div>
+          <!-- Tercapai toggle -->
+          <div class="q-label" style="margin-bottom:10px">Apakah Tujuan 1 sudah tercapai saat ini?</div>
+          <div class="tercapai-toggle">
+            <button class="tcbtn ya" id="tc1Ya" onclick="setTercapai(1,'ya')">✅ Ya</button>
+            <button class="tcbtn tidak" id="tc1Tidak" onclick="setTercapai(1,'tidak')">❌ Tidak</button>
+          </div>
+          <!-- Jika Ya -->
+          <div class="cond-group" id="t1IfYa">
+            <div class="q-group">
+              <div class="q-label">Jika Ya, jelaskan:</div>
+              <textarea id="t1_ya_jelaskan" placeholder="Jelaskan pencapaian tujuan ini..." rows="3"></textarea>
+            </div>
+          </div>
+          <!-- Jika Tidak -->
+          <div class="cond-group" id="t1IfTidak">
+            <div class="q-group">
+              <div class="q-label">Jika Tidak, mengapa?</div>
+              <textarea id="t1_tidak_mengapa" placeholder="Jelaskan mengapa tujuan belum tercapai..." rows="3"></textarea>
+            </div>
+          </div>
+          <!-- Saran (selalu tampil) -->
+          <div class="q-group" style="margin-top:8px">
+            <div class="q-label">Apa saran baru untuk hal ini?</div>
+            <textarea id="t1_saran" placeholder="Saran dan rekomendasi..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tujuan 2 -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>🟣</span> Evaluasi Tujuan 2</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="tujuan-card t2-card">
+        <div class="tujuan-header t2-header" onclick="toggleTujuan(2)">
+          <div class="tujuan-num t2-num">2</div>
+          <div id="t2HeaderText" style="flex:1">Tujuan 2</div>
+          <div class="tujuan-toggle" id="t2Toggle">▾</div>
+        </div>
+        <div class="tujuan-body" id="t2Body">
+          <div class="tujuan-ref-box t2-ref">
+            <div class="tujuan-ref-label">Tujuan dari IRP</div>
+            <div id="t2RefText" class="irp-not-found">Belum ada data IRP</div>
+          </div>
+          <div class="q-label" style="margin-bottom:10px">Apakah Tujuan 2 sudah tercapai saat ini?</div>
+          <div class="tercapai-toggle">
+            <button class="tcbtn ya" id="tc2Ya" onclick="setTercapai(2,'ya')">✅ Ya</button>
+            <button class="tcbtn tidak" id="tc2Tidak" onclick="setTercapai(2,'tidak')">❌ Tidak</button>
+          </div>
+          <div class="cond-group" id="t2IfYa">
+            <div class="q-group">
+              <div class="q-label">Jika Ya, jelaskan:</div>
+              <textarea id="t2_ya_jelaskan" placeholder="Jelaskan pencapaian tujuan ini..." rows="3"></textarea>
+            </div>
+          </div>
+          <div class="cond-group" id="t2IfTidak">
+            <div class="q-group">
+              <div class="q-label">Jika Tidak, mengapa?</div>
+              <textarea id="t2_tidak_mengapa" placeholder="Jelaskan mengapa tujuan belum tercapai..." rows="3"></textarea>
+            </div>
+          </div>
+          <div class="q-group" style="margin-top:8px">
+            <div class="q-label">Apa saran baru untuk hal ini?</div>
+            <textarea id="t2_saran" placeholder="Saran dan rekomendasi..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tujuan 3 -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>🟠</span> Evaluasi Tujuan 3</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="tujuan-card t3-card">
+        <div class="tujuan-header t3-header" onclick="toggleTujuan(3)">
+          <div class="tujuan-num t3-num">3</div>
+          <div id="t3HeaderText" style="flex:1">Tujuan 3</div>
+          <div class="tujuan-toggle" id="t3Toggle">▾</div>
+        </div>
+        <div class="tujuan-body" id="t3Body">
+          <div class="tujuan-ref-box t3-ref">
+            <div class="tujuan-ref-label">Tujuan dari IRP</div>
+            <div id="t3RefText" class="irp-not-found">Belum ada data IRP</div>
+          </div>
+          <div class="q-label" style="margin-bottom:10px">Apakah Tujuan 3 sudah tercapai saat ini?</div>
+          <div class="tercapai-toggle">
+            <button class="tcbtn ya" id="tc3Ya" onclick="setTercapai(3,'ya')">✅ Ya</button>
+            <button class="tcbtn tidak" id="tc3Tidak" onclick="setTercapai(3,'tidak')">❌ Tidak</button>
+          </div>
+          <div class="cond-group" id="t3IfYa">
+            <div class="q-group">
+              <div class="q-label">Jika Ya, jelaskan:</div>
+              <textarea id="t3_ya_jelaskan" placeholder="Jelaskan pencapaian tujuan ini..." rows="3"></textarea>
+            </div>
+          </div>
+          <div class="cond-group" id="t3IfTidak">
+            <div class="q-group">
+              <div class="q-label">Jika Tidak, mengapa?</div>
+              <textarea id="t3_tidak_mengapa" placeholder="Jelaskan mengapa tujuan belum tercapai..." rows="3"></textarea>
+            </div>
+          </div>
+          <div class="q-group" style="margin-top:8px">
+            <div class="q-label">Apa saran baru untuk hal ini?</div>
+            <textarea id="t3_saran" placeholder="Saran dan rekomendasi..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ringkasan Hasil -->
+  <div class="card" id="cardHasil">
+    <div class="card-header no-toggle" style="cursor:default">
+      <div class="card-title"><span>📊</span> Ringkasan Hasil</div>
+    </div>
+    <div class="card-body">
+      <div id="hasilPanel">
+        <div class="irp-not-found">Belum ada pilihan Ya/Tidak.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dokumentasi -->
+  <div class="card">
+    <div class="card-header" onclick="toggleSection(this)">
+      <div class="card-title"><span>📷</span> Dokumentasi &amp; Lokasi</div>
+      <div class="toggle-btn">▾</div>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Foto Kunjungan</label>
+        <input type="file" id="photoInput" accept="image/*" multiple capture="environment" style="display:none" onchange="handlePhotos(this)">
+        <div class="photo-grid" id="photoGrid"></div>
+        <button class="photo-add-btn" onclick="document.getElementById('photoInput').click()">📷 Tambah Foto</button>
+      </div>
+      <div class="form-group">
+        <label>Lokasi GPS</label>
+        <div class="gps-widget">
+          <div class="gps-row">
+            <button class="gps-btn" onclick="takeGPS()">📍 Ambil GPS</button>
+            <span class="gps-badge" id="gpsBadge">✓ GPS tercatat</span>
+          </div>
+          <div class="gps-loading" id="gpsLoading">⏳ Mengambil lokasi…</div>
+          <div id="gpsDetail" style="font-size:12px;color:var(--fg2);margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catatan Tambahan</label>
+        <textarea id="catatan" placeholder="Catatan penutup evaluasi..." rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-bar">
+    <button class="btn btn-draft" onclick="handleSave('draft')">💾 Draft</button>
+    <button class="btn btn-save" onclick="handleSave('aktif')">✓ Simpan</button>
+  </div>
+
+</div><!-- /page-body -->
+
+<div class="sync-overlay" id="syncOverlay">
+  <div class="sync-box">
+    <div class="sync-spinner"></div>
+    <div class="sync-text">Menyimpan data…</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── IndexedDB shim ──────────────────────────────────────────────────────────
+const DB_NAME = 'masterdb_scn';
+const DB_VERSION = 1;
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('anak')) {
+        const s = db.createObjectStore('anak', {keyPath:'id', autoIncrement:true});
+        s.createIndex('scn_id','scn_id',{unique:false});
+      }
+      ['observasi','buku_harian','irp','eval_tengah','eval_akhir','sel','myp','ppdp','rujukan'].forEach(n => {
+        if (!db.objectStoreNames.contains(n)) {
+          const s = db.createObjectStore(n, {keyPath:'id', autoIncrement:true});
+          s.createIndex('anak_id','anak_id',{unique:false});
+        }
+      });
+      if (!db.objectStoreNames.contains('users')) db.createObjectStore('users',{keyPath:'id',autoIncrement:true});
+      if (!db.objectStoreNames.contains('sync_queue')) db.createObjectStore('sync_queue',{keyPath:'id',autoIncrement:true});
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function dbGetAll(s) { return openDB().then(db => new Promise((res,rej) => { const r = db.transaction(s,'readonly').objectStore(s).getAll(); r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); })); }
+function dbGet(s,id) { return openDB().then(db => new Promise((res,rej) => { const r = db.transaction(s,'readonly').objectStore(s).get(id); r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); })); }
+function dbPut(s,rec) { return openDB().then(db => new Promise((res,rej) => { const r = db.transaction(s,'readwrite').objectStore(s).put(rec); r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error); })); }
+function getSession() { try { return JSON.parse(localStorage.getItem('masterdb_session')); } catch { return null; } }
+function addToSyncQueue(s,id) { return dbPut('sync_queue',{store:s,record_id:id,created_at:new Date().toISOString()}); }
+function today() { return new Date().toISOString().slice(0,10); }
+function formatDate(d) { if (!d) return ''; try { return new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}); } catch { return d; } }
+function hitungUmur(tgl) { if (!tgl) return ''; const b=new Date(tgl),n=new Date(); let y=n.getFullYear()-b.getFullYear(); if(n.getMonth()-b.getMonth()<0||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))y--; return y+' tahun'; }
+function showToast(msg, type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type?' '+type:''); clearTimeout(t._t); t._t=setTimeout(()=>t.className='toast',2800); }
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const state = {
+  session: null, editId: null, anakId: null,
+  gps: null, photos: [],
+  tercapai: { 1: null, 2: null, 3: null }
+};
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+async function initApp() {
+  state.session = getSession();
+  if (state.session) {
+    const s = state.session;
+    document.getElementById('topSubtitle').textContent = (s.scn_id||'') + (s.name ? ' · '+s.name : '');
+    if (s.scn_id) { document.getElementById('scnId').value = s.scn_id; await loadAnakOptions(s.scn_id); }
+    if (s.name) document.getElementById('cbrWorker').value = s.name;
+  }
+  document.getElementById('tanggal').value = today();
+
+  const params = new URLSearchParams(location.search);
+  if (params.has('id')) {
+    const id = parseInt(params.get('id'));
+    if (!isNaN(id)) await loadRecord(id);
+  }
+
+  function updateOnline() {
+    const dot = document.getElementById('offlineDot');
+    dot.className = 'offline-dot' + (navigator.onLine ? '' : ' offline');
+  }
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+  updateOnline();
+}
+
+// ─── SCN + Anak ──────────────────────────────────────────────────────────────
+async function onSCNChange() {
+  const scn = document.getElementById('scnId').value;
+  if (scn) await loadAnakOptions(scn);
+}
+async function loadAnakOptions(scn) {
+  const sel = document.getElementById('anakSelect');
+  sel.innerHTML = '<option value="">-- Pilih Anak --</option>';
+  document.getElementById('anakInfo').innerHTML = '<div class="anak-select-prompt">Pilih anak untuk melihat detail</div>';
+  state.anakId = null; resetIRP();
+  try {
+    const all = await dbGetAll('anak');
+    const filtered = all.filter(a => a.scn_id === scn).sort((a,b) => (a.nama||'').localeCompare(b.nama||''));
+    filtered.forEach(a => {
+      const o = document.createElement('option');
+      o.value = a.id; o.textContent = a.nama || ('Anak #'+a.id);
+      sel.appendChild(o);
+    });
+    if (!filtered.length) { const o=document.createElement('option'); o.value=''; o.disabled=true; o.textContent='(Belum ada anak di SCN ini)'; sel.appendChild(o); }
+  } catch(e) { showToast('Gagal memuat anak: '+e.message,'error'); }
+}
+async function onAnakChange() {
+  const val = document.getElementById('anakSelect').value;
+  if (!val) { state.anakId=null; document.getElementById('anakInfo').innerHTML='<div class="anak-select-prompt">Pilih anak untuk melihat detail</div>'; resetIRP(); return; }
+  state.anakId = parseInt(val);
+  try {
+    const a = await dbGet('anak', state.anakId);
+    if (a) document.getElementById('anakInfo').innerHTML = `
+      <div class="anak-info-card">
+        <div class="anak-name">${a.nama||'Tanpa Nama'}</div>
+        <div class="anak-meta">${a.jenis_kelamin||''} · ${hitungUmur(a.tgl_lahir)} · ${a.desa||a.dusun||''}</div>
+        <div class="anak-meta" style="font-size:12px;color:var(--fg2)">Jenis Disabilitas: ${a.jenis_disabilitas||'-'}</div>
+      </div>`;
+  } catch(e) {}
+  await loadIRP(state.anakId);
+}
+function resetIRP() {
+  document.getElementById('irpSummaryBox').innerHTML = '<div class="irp-not-found">Pilih anak terlebih dahulu.</div>';
+  [1,2,3].forEach(t => { document.getElementById('t'+t+'RefText').textContent='Belum ada data IRP'; document.getElementById('t'+t+'HeaderText').textContent='Tujuan '+t; });
+}
+async function loadIRP(anakId) {
+  try {
+    const all = await dbGetAll('irp');
+    const filtered = all.filter(r => r.anak_id === anakId && r.status === 'aktif');
+    if (!filtered.length) { document.getElementById('irpSummaryBox').innerHTML='<div class="irp-not-found">Belum ada IRP aktif untuk anak ini.</div>'; return; }
+    filtered.sort((a,b) => (b.tanggal||'').localeCompare(a.tanggal||''));
+    const irp = filtered[0];
+    const colors = {1:['#1B6CA8','#E8F1F9'],2:['#7B3FA0','#F3EBF9'],3:['#B05C1A','#FBF0E7']};
+    document.getElementById('irpSummaryBox').innerHTML = `
+      <div class="irp-summary-box">
+        <div class="irp-summary-label">IRP Terbaru — ${formatDate(irp.tanggal)}</div>
+        <div style="display:grid;gap:10px">
+          ${[1,2,3].map(t => {
+            const tj = irp['tujuan_'+t]; if (!tj) return '';
+            const [fg,bg] = colors[t];
+            return `<div style="background:${bg};border-radius:8px;padding:10px 12px">
+              <div style="font-size:11px;font-weight:700;color:${fg};text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Tujuan ${t}</div>
+              <div style="font-size:14px;color:var(--fg)">${tj}</div></div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    [1,2,3].forEach(t => {
+      const tj = irp['tujuan_'+t];
+      if (tj) { document.getElementById('t'+t+'RefText').textContent=tj; document.getElementById('t'+t+'HeaderText').textContent=tj.length>40?tj.slice(0,40)+'…':tj; }
+      else { document.getElementById('t'+t+'RefText').textContent='(Tidak diisi dalam IRP)'; }
+    });
+  } catch(e) { document.getElementById('irpSummaryBox').innerHTML='<div class="irp-not-found">Gagal memuat IRP.</div>'; }
+}
+
+// ─── Tercapai toggle ──────────────────────────────────────────────────────────
+function setTercapai(t, val) {
+  state.tercapai[t] = val;
+  document.getElementById('tc'+t+'Ya').className = 'tcbtn ya' + (val==='ya'?' selected':'');
+  document.getElementById('tc'+t+'Tidak').className = 'tcbtn tidak' + (val==='tidak'?' selected':'');
+  document.getElementById('t'+t+'IfYa').className = 'cond-group' + (val==='ya'?' visible':'');
+  document.getElementById('t'+t+'IfTidak').className = 'cond-group' + (val==='tidak'?' visible':'');
+  updateHasilPanel();
+}
+function updateHasilPanel() {
+  const panel = document.getElementById('hasilPanel');
+  const tujuanData = [1,2,3].map(t => {
+    const tc = state.tercapai[t];
+    const ref = document.getElementById('t'+t+'RefText').textContent;
+    return { t, tc, ref };
+  });
+  const anySet = tujuanData.some(d => d.tc !== null);
+  if (!anySet) { panel.innerHTML='<div class="irp-not-found">Belum ada pilihan Ya/Tidak.</div>'; return; }
+
+  const tercapaiCount = tujuanData.filter(d => d.tc === 'ya').length;
+  const setCount = tujuanData.filter(d => d.tc !== null).length;
+  const totalRows = tujuanData.map(({t, tc, ref}) => {
+    if (!tc) return '';
+    const badge = tc === 'ya'
+      ? '<span class="summary-result summary-ya">✅ Tercapai</span>'
+      : '<span class="summary-result summary-tidak">❌ Belum Tercapai</span>';
+    const shortRef = ref === 'Belum ada data IRP' ? '(Tujuan '+t+')' : (ref.length > 50 ? ref.slice(0,50)+'…' : ref);
+    return `<div class="summary-row"><span class="summary-tujuan"><b>T${t}</b> ${shortRef}</span>${badge}</div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div style="font-size:14px;color:var(--fg2);margin-bottom:12px">
+      ${tercapaiCount} dari ${setCount} tujuan yang dievaluasi dinyatakan <strong style="color:var(--green)">Tercapai</strong>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">${totalRows}</div>`;
+}
+
+// ─── Toggle sections ──────────────────────────────────────────────────────────
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  const btn = header.querySelector('.toggle-btn');
+  if (!body) return;
+  body.hidden = !body.hidden;
+  if (btn) btn.style.transform = body.hidden ? 'rotate(-90deg)' : '';
+}
+function toggleTujuan(t) {
+  const body = document.getElementById('t'+t+'Body');
+  const btn = document.getElementById('t'+t+'Toggle');
+  if (!body) return;
+  body.hidden = !body.hidden;
+  if (btn) btn.style.transform = body.hidden ? 'rotate(-90deg)' : '';
+}
+
+// ─── Photos ───────────────────────────────────────────────────────────────────
+function handlePhotos(input) {
+  Array.from(input.files).forEach(f => {
+    if (f.size > 10*1024*1024) { showToast('Foto terlalu besar','error'); return; }
+    const r = new FileReader();
+    r.onload = e => compressAndAdd(e.target.result);
+    r.readAsDataURL(f);
+  });
+  input.value = '';
+}
+function compressAndAdd(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const MAX=1600; let {width:w,height:h}=img;
+    if (w>MAX||h>MAX) { const r=Math.min(MAX/w,MAX/h); w=Math.round(w*r); h=Math.round(h*r); }
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    state.photos.push(c.toDataURL('image/jpeg',0.82)); renderPhotos();
+  };
+  img.src = dataUrl;
+}
+function renderPhotos() {
+  document.getElementById('photoGrid').innerHTML = state.photos.map((p,i) =>
+    `<div class="photo-thumb"><img src="${p}" alt=""><button class="del-photo" onclick="removePhoto(${i})">✕</button></div>`).join('');
+}
+function removePhoto(i) { state.photos.splice(i,1); renderPhotos(); }
+
+// ─── GPS ──────────────────────────────────────────────────────────────────────
+function takeGPS() {
+  const loading=document.getElementById('gpsLoading'), badge=document.getElementById('gpsBadge'), detail=document.getElementById('gpsDetail');
+  loading.classList.add('visible'); badge.classList.remove('visible');
+  navigator.geolocation.getCurrentPosition(pos => {
+    loading.classList.remove('visible');
+    state.gps = { lat:pos.coords.latitude, lng:pos.coords.longitude, alt:pos.coords.altitude, accuracy:pos.coords.accuracy, ts:new Date().toISOString() };
+    badge.classList.add('visible');
+    detail.textContent = `${state.gps.lat.toFixed(6)}, ${state.gps.lng.toFixed(6)} (±${Math.round(state.gps.accuracy)}m)`;
+  }, err => { loading.classList.remove('visible'); showToast('GPS gagal: '+err.message,'error'); },
+  {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+// ─── Save ─────────────────────────────────────────────────────────────────────
+async function handleSave(status) {
+  const anakId = state.anakId;
+  const tanggal = document.getElementById('tanggal').value;
+  const scnId = document.getElementById('scnId').value;
+  if (!anakId) { showToast('Pilih anak terlebih dahulu','error'); return; }
+  if (status === 'aktif' && !tanggal) { showToast('Tanggal wajib diisi','error'); return; }
+  if (status === 'aktif' && !scnId) { showToast('SCN wajib dipilih','error'); return; }
+  if (status === 'aktif' && !state.tercapai[1]) { showToast('Tentukan apakah Tujuan 1 tercapai','error'); return; }
+
+  const now = new Date().toISOString();
+  const record = {
+    anak_id: anakId, scn_id: scnId,
+    cbr_worker: document.getElementById('cbrWorker').value.trim(),
+    tanggal,
+    // T1
+    t1_tercapai: state.tercapai[1],
+    t1_ya_jelaskan: document.getElementById('t1_ya_jelaskan').value.trim(),
+    t1_tidak_mengapa: document.getElementById('t1_tidak_mengapa').value.trim(),
+    t1_saran: document.getElementById('t1_saran').value.trim(),
+    // T2
+    t2_tercapai: state.tercapai[2],
+    t2_ya_jelaskan: document.getElementById('t2_ya_jelaskan').value.trim(),
+    t2_tidak_mengapa: document.getElementById('t2_tidak_mengapa').value.trim(),
+    t2_saran: document.getElementById('t2_saran').value.trim(),
+    // T3
+    t3_tercapai: state.tercapai[3],
+    t3_ya_jelaskan: document.getElementById('t3_ya_jelaskan').value.trim(),
+    t3_tidak_mengapa: document.getElementById('t3_tidak_mengapa').value.trim(),
+    t3_saran: document.getElementById('t3_saran').value.trim(),
+    fotos: state.photos, gps: state.gps,
+    catatan: document.getElementById('catatan').value.trim(),
+    status, updated_at: now,
+  };
+
+  if (state.editId) { record.id = state.editId; record.created_at = record.created_at || now; }
+  else { record.created_at = now; }
+
+  document.getElementById('syncOverlay').classList.add('visible');
+  try {
+    const savedId = await dbPut('eval_akhir', record);
+    if (!state.editId) { state.editId = savedId; history.replaceState(null,'','?id='+savedId); }
+    await addToSyncQueue('eval_akhir', state.editId || savedId);
+    document.getElementById('syncOverlay').classList.remove('visible');
+    showToast(status==='draft' ? '📝 Draft tersimpan' : '✓ Evaluasi Akhir tersimpan!');
+  } catch(e) {
+    document.getElementById('syncOverlay').classList.remove('visible');
+    showToast('Gagal menyimpan: '+e.message,'error');
+  }
+}
+
+// ─── Load record ──────────────────────────────────────────────────────────────
+async function loadRecord(id) {
+  try {
+    const rec = await dbGet('eval_akhir', id);
+    if (!rec) { showToast('Data tidak ditemukan','error'); return; }
+    state.editId = id;
+    if (rec.scn_id) { document.getElementById('scnId').value=rec.scn_id; await loadAnakOptions(rec.scn_id); }
+    if (rec.anak_id) { document.getElementById('anakSelect').value=rec.anak_id; await onAnakChange(); }
+    if (rec.tanggal) document.getElementById('tanggal').value = rec.tanggal;
+    if (rec.cbr_worker) document.getElementById('cbrWorker').value = rec.cbr_worker;
+    [1,2,3].forEach(t => {
+      if (rec['t'+t+'_tercapai']) setTercapai(t, rec['t'+t+'_tercapai']);
+      ['ya_jelaskan','tidak_mengapa','saran'].forEach(k => {
+        const el = document.getElementById(`t${t}_${k}`);
+        if (el && rec[`t${t}_${k}`]) el.value = rec[`t${t}_${k}`];
+      });
+    });
+    if (rec.fotos && Array.isArray(rec.fotos)) { state.photos=rec.fotos; renderPhotos(); }
+    if (rec.gps) {
+      state.gps=rec.gps; document.getElementById('gpsBadge').classList.add('visible');
+      document.getElementById('gpsDetail').textContent = `${rec.gps.lat.toFixed(6)}, ${rec.gps.lng.toFixed(6)} (±${Math.round(rec.gps.accuracy||0)}m)`;
+    }
+    if (rec.catatan) document.getElementById('catatan').value = rec.catatan;
+  } catch(e) { showToast('Gagal memuat data: '+e.message,'error'); }
+}
+
+function goBack() { history.back(); }
+initApp();
+</script>

@@ -1,0 +1,28 @@
+{
+  "name": "Logbook STEP BEN",
+  "short_name": "STEP BEN",
+  "description": "Logbook Monitoring CBR Program BEN",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1B6CA8",
+  "theme_color": "#1B6CA8",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "utilities"],
+  "scope": "./",
+  "prefer_related_applications": false
+}

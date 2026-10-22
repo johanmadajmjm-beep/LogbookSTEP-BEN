@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#006B5E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pendataan Awal Anak — Logbook STEP BEN</title>
+<link rel="manifest" href="./manifest.json">
+<script src="./sw-register.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── profil-specific ──────────────────────────────────── */
+.page-topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-teal-600);
+  color: #fff;
+}
+.page-topbar::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--color-teal-600);
+  z-index: 51;
+}
+.topbar-back {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  flex-shrink: 0;
+}
+.topbar-back svg { width: 20px; height: 20px; }
+.topbar-title { font-size: 1rem; font-weight: 700; flex: 1; }
+.topbar-subtitle { font-size: .75rem; opacity: .75; }
+
+/* form container */
+.form-container {
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 120px max(16px, env(safe-area-inset-left, 0px));
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* section card */
+.section-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--color-teal-600);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-teal-600);
+  opacity: .2;
+}
+
+/* form fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+.form-label .req { color: var(--color-danger, #DC2626); margin-left: 2px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: .9375rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--color-teal-500);
+  box-shadow: 0 0 0 3px rgba(0,107,94,.12);
+}
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* pills for single-select */
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: .8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pill.selected {
+  background: var(--color-teal-600);
+  border-color: var(--color-teal-600);
+  color: #fff;
+}
+
+/* checkbox tags for multi-select */
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: .8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tag.selected {
+  background: rgba(0,107,94,.12);
+  border-color: var(--color-teal-600);
+  color: var(--color-teal-600);
+}
+.tag.selected::before { content: '✓ '; }
+
+/* sub-group (indented conditional) */
+.sub-group {
+  margin-top: 10px;
+  padding: 14px;
+  background: rgba(0,107,94,.04);
+  border-radius: 12px;
+  border: 1px solid rgba(0,107,94,.12);
+}
+.sub-group-label {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--color-teal-600);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* Cantril scale */
+.cantril-wrap { overflow-x: auto; padding-bottom: 4px; }
+.cantril-row {
+  display: flex;
+  gap: 6px;
+  min-width: max-content;
+}
+.cantril-btn {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.cantril-btn.selected {
+  background: var(--color-teal-600);
+  border-color: var(--color-teal-600);
+  color: #fff;
+}
+.cantril-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: .7rem;
+  color: var(--color-text-secondary);
+}
+
+/* GPS block */
+.gps-block {
+  border: 1.5px dashed var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.gps-row { display: flex; align-items: center; gap: 10px; }
+.gps-btn {
+  padding: 8px 16px;
+  background: var(--color-teal-600);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.gps-status { font-size: .8125rem; color: var(--color-text-secondary); }
+.gps-status.ok { color: var(--color-success, #16a34a); }
+.gps-status.wait { color: var(--color-teal-600); }
+.gps-coords {
+  font-size: .75rem;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+/* photo */
+.photo-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--color-teal-600);
+  font-size: .875rem;
+  font-weight: 600;
+}
+.photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb-rm {
+  position: absolute; top: 2px; right: 2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* submit bar */
+.submit-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: 10px;
+  z-index: 40;
+}
+.btn-draft {
+  flex: 0 0 auto;
+  padding: 13px 20px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-teal-600);
+  background: transparent;
+  color: var(--color-teal-600);
+  font-size: .9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-simpan {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-teal-600);
+  color: #fff;
+  font-size: .9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-simpan:disabled, .btn-draft:disabled {
+  opacity: .5; cursor: not-allowed;
+}
+
+/* helper text */
+.form-hint {
+  font-size: .75rem;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+/* anak-id badge */
+.anak-id-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0,107,94,.1);
+  color: var(--color-teal-600);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
+<div class="page-topbar">
+  <button class="topbar-back" id="btn-back" aria-label="Kembali">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div>
+    <div class="topbar-title">Pendataan Awal Anak</div>
+    <div class="topbar-subtitle" id="topbar-sub">Form baru</div>
+  </div>
+</div>
+
+<!-- ═══ FORM ════════════════════════════════════════════════ -->
+<div class="form-container">
+
+  <!-- 0. Meta (auto-filled) -->
+  <div class="section-card" id="card-meta">
+    <div class="section-title">Info Pendataan</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">SCN</label>
+        <input class="form-input" id="f-scn" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CBR Worker</label>
+        <input class="form-input" id="f-cbr" readonly>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tanggal Input</label>
+        <input class="form-input" id="f-tgl-input" type="date" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <input class="form-input" id="f-status" readonly value="Draft">
+      </div>
+    </div>
+    <div id="anak-id-wrap" style="display:none; margin-top:4px;">
+      <span class="anak-id-badge">ID: <span id="anak-id-val"></span></span>
+    </div>
+  </div>
+
+  <!-- 1. Identitas Anak -->
+  <div class="section-card">
+    <div class="section-title">Identitas Anak</div>
+
+    <div class="form-group">
+      <label class="form-label">Nama Anak <span class="req">*</span></label>
+      <input class="form-input" id="f-nama" type="text" placeholder="Nama lengkap anak" autocomplete="off">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tanggal Lahir <span class="req">*</span></label>
+        <input class="form-input" id="f-tgl-lahir" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usia (otomatis)</label>
+        <input class="form-input" id="f-usia" readonly placeholder="—">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Jenis Kelamin <span class="req">*</span></label>
+      <div class="pill-group" id="pills-jk">
+        <div class="pill" data-value="L">♂ Laki-Laki</div>
+        <div class="pill" data-value="P">♀ Perempuan</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Kampung / Dusun</label>
+        <input class="form-input" id="f-kampung" type="text" placeholder="Nama kampung/dusun">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Desa</label>
+        <input class="form-input" id="f-desa" type="text" placeholder="Nama desa">
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Data Pengasuh -->
+  <div class="section-card">
+    <div class="section-title">Data Pengasuh</div>
+
+    <div class="form-group">
+      <label class="form-label">Nama Pengasuh <span class="req">*</span></label>
+      <input class="form-input" id="f-pengasuh" type="text" placeholder="Nama lengkap pengasuh">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Status Pengasuh <span class="req">*</span></label>
+      <div class="pill-group" id="pills-status-pengasuh">
+        <div class="pill" data-value="Orang Tua Kandung">Orang Tua Kandung</div>
+        <div class="pill" data-value="Kakek/Nenek">Kakek/Nenek</div>
+        <div class="pill" data-value="Saudara/i">Saudara/i</div>
+        <div class="pill" data-value="Wali">Wali</div>
+        <div class="pill" data-value="Lainnya">Lainnya</div>
+      </div>
+    </div>
+
+    <div class="form-group" id="grp-pengasuh-lainnya" style="display:none;">
+      <label class="form-label">Jika lainnya, siapa?</label>
+      <input class="form-input" id="f-pengasuh-lainnya" type="text" placeholder="Hubungan pengasuh dengan anak">
+    </div>
+  </div>
+
+  <!-- 3. Ragam Disabilitas -->
+  <div class="section-card">
+    <div class="section-title">Ragam Disabilitas</div>
+
+    <div class="form-group">
+      <label class="form-label">Jenis Disabilitas <span class="req">*</span></label>
+      <div class="tag-group" id="tags-disabilitas">
+        <div class="tag" data-value="Sensorik (penglihatan)">Sensorik — Penglihatan</div>
+        <div class="tag" data-value="Sensorik (pendengaran dan bicara)">Sensorik — Pendengaran & Bicara</div>
+        <div class="tag" data-value="Fisik">Fisik / Kusta</div>
+        <div class="tag" data-value="Intelektual">Intelektual</div>
+        <div class="tag" data-value="Ganda">Ganda</div>
+        <div class="tag" data-value="Lainnya">Lainnya</div>
+      </div>
+    </div>
+
+    <!-- Sub: Sensorik Penglihatan -->
+    <div class="sub-group" id="sub-penglihatan" style="display:none;">
+      <div class="sub-group-label">Detail — Sensorik Penglihatan</div>
+      <div class="tag-group" id="tags-penglihatan">
+        <div class="tag" data-value="buta total">Buta Total</div>
+        <div class="tag" data-value="low vision">Low Vision</div>
+        <div class="tag" data-value="lainnya">Lainnya</div>
+      </div>
+      <div class="form-group" id="grp-penglihatan-lainnya" style="display:none; margin-top:10px; margin-bottom:0">
+        <input class="form-input" id="f-penglihatan-lainnya" type="text" placeholder="Sebutkan jenis disabilitas penglihatan">
+      </div>
+    </div>
+
+    <!-- Sub: Sensorik Pendengaran & Bicara -->
+    <div class="sub-group" id="sub-pendengaran" style="display:none;">
+      <div class="sub-group-label">Detail — Sensorik Pendengaran & Bicara</div>
+      <div class="tag-group" id="tags-pendengaran">
+        <div class="tag" data-value="rungu/tuli">Rungu / Tuli</div>
+        <div class="tag" data-value="gangguan pendengaran">Gangguan Pendengaran</div>
+        <div class="tag" data-value="tidak bisa bicara/sulit membentuk kata">Tidak Bisa Bicara / Sulit Membentuk Kata</div>
+        <div class="tag" data-value="lainnya">Lainnya</div>
+      </div>
+      <div class="form-group" id="grp-pendengaran-lainnya" style="display:none; margin-top:10px; margin-bottom:0">
+        <input class="form-input" id="f-pendengaran-lainnya" type="text" placeholder="Sebutkan jenis disabilitas pendengaran/bicara">
+      </div>
+    </div>
+
+    <!-- Sub: Fisik/Kusta -->
+    <div class="sub-group" id="sub-fisik" style="display:none;">
+      <div class="sub-group-label">Detail — Fisik / Kusta</div>
+      <div class="tag-group" id="tags-fisik">
+        <div class="tag" data-value="cerebral palsy">Cerebral Palsy</div>
+        <div class="tag" data-value="kaki pengkor">Kaki Pengkor</div>
+        <div class="tag" data-value="hydrocephalus">Hydrocephalus</div>
+        <div class="tag" data-value="spina bifida">Spina Bifida</div>
+        <div class="tag" data-value="polio">Polio</div>
+        <div class="tag" data-value="knock- or bow kneed">Knock/Bow Kneed</div>
+        <div class="tag" data-value="chronic osteomyelitis">Chronic Osteomyelitis</div>
+        <div class="tag" data-value="amputasi">Amputasi</div>
+        <div class="tag" data-value="otot tidak bisa digunakan">Otot Tidak Bisa Digunakan</div>
+        <div class="tag" data-value="luka bakar serius">Luka Bakar Serius</div>
+        <div class="tag" data-value="lainnya">Lainnya</div>
+      </div>
+      <div class="form-group" id="grp-fisik-lainnya" style="display:none; margin-top:10px; margin-bottom:0">
+        <input class="form-input" id="f-fisik-lainnya" type="text" placeholder="Sebutkan jenis disabilitas fisik">
+      </div>
+    </div>
+
+    <!-- Sub: Intelektual -->
+    <div class="sub-group" id="sub-intelektual" style="display:none;">
+      <div class="sub-group-label">Detail — Intelektual</div>
+      <div class="tag-group" id="tags-intelektual">
+        <div class="tag" data-value="cerebral palsy">Cerebral Palsy</div>
+        <div class="tag" data-value="autisme">Autisme</div>
+        <div class="tag" data-value="kesulitan belajar">Kesulitan Belajar</div>
+        <div class="tag" data-value="down syndrome">Down Syndrome</div>
+        <div class="tag" data-value="epilepsi">Epilepsi</div>
+        <div class="tag" data-value="lainnya">Lainnya</div>
+      </div>
+      <div class="form-group" id="grp-intelektual-lainnya" style="display:none; margin-top:10px; margin-bottom:0">
+        <input class="form-input" id="f-intelektual-lainnya" type="text" placeholder="Sebutkan jenis disabilitas intelektual">
+      </div>
+    </div>
+
+    <!-- Sub: Ganda -->
+    <div class="sub-group" id="sub-ganda" style="display:none;">
+      <div class="sub-group-label">Detail — Ganda (pilih semua yang berlaku)</div>
+      <div class="tag-group" id="tags-ganda">
+        <div class="tag" data-value="disabilitas sensorik (penglihatan)">Sensorik — Penglihatan</div>
+        <div class="tag" data-value="disabilitas sensorik (pendengaran dan bicara)">Sensorik — Pendengaran & Bicara</div>
+        <div class="tag" data-value="disabilitas fisik/kusta (permasalahan gerak, kulit/kosmetik)">Fisik / Kusta</div>
+        <div class="tag" data-value="disabilitas intelektual (belajar/perilaku)">Intelektual</div>
+      </div>
+    </div>
+
+    <!-- Sub: Lainnya -->
+    <div class="form-group" id="grp-disabilitas-lainnya" style="display:none; margin-top:12px;">
+      <label class="form-label">Jika lainnya, deskripsikan</label>
+      <input class="form-input" id="f-disabilitas-lainnya" type="text" placeholder="Deskripsi disabilitas lainnya">
+    </div>
+
+    <!-- Level -->
+    <div class="form-group" style="margin-top:16px;">
+      <label class="form-label">Level Disabilitas <span class="req">*</span></label>
+      <div class="pill-group" id="pills-level">
+        <div class="pill" data-value="Rendah (sedikit dukungan)">🟡 Rendah</div>
+        <div class="pill" data-value="Sedang (dukungan reguler)">🟠 Sedang</div>
+        <div class="pill" data-value="Parah (dukungan penuh)">🔴 Parah</div>
+      </div>
+      <div class="form-hint">Rendah = sedikit dukungan · Sedang = dukungan reguler · Parah = dukungan penuh</div>
+    </div>
+  </div>
+
+  <!-- 4. Riwayat Kesehatan -->
+  <div class="section-card">
+    <div class="section-title">Riwayat Kesehatan</div>
+
+    <div class="form-group">
+      <label class="form-label">Epilepsi</label>
+      <div class="pill-group" id="pills-epilepsi">
+        <div class="pill" data-value="Ya">Ya</div>
+        <div class="pill" data-value="Tidak">Tidak</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Pengobatan dalam 1 tahun terakhir</label>
+      <div class="pill-group" id="pills-pengobatan">
+        <div class="pill" data-value="Ya">Ya</div>
+        <div class="pill" data-value="Tidak">Tidak</div>
+      </div>
+    </div>
+
+    <div id="grp-detail-pengobatan" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Di fasilitas kesehatan apa?</label>
+        <input class="form-input" id="f-faskes" type="text" placeholder="Cth: Puskesmas, RS, Klinik">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Layanan pengobatan yang diterima</label>
+        <div class="tag-group" id="tags-layanan-pengobatan">
+          <div class="tag" data-value="Medis">Medis</div>
+          <div class="tag" data-value="Alternatif">Alternatif</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Pernah mendapat layanan terapi dalam 1 tahun terakhir?</label>
+      <div class="pill-group" id="pills-terapi">
+        <div class="pill" data-value="Ya">Ya</div>
+        <div class="pill" data-value="Tidak">Tidak</div>
+      </div>
+    </div>
+
+    <div id="grp-detail-terapi" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Jenis layanan terapi</label>
+        <input class="form-input" id="f-jenis-terapi" type="text" placeholder="Cth: Fisioterapi, Terapi Wicara, Terapi Okupasi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Siapa yang melakukan terapi?</label>
+        <input class="form-input" id="f-pelaku-terapi" type="text" placeholder="Cth: Fisioterapis, Tenaga Sukarela">
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Cantril Scale — Pengasuh -->
+  <div class="section-card">
+    <div class="section-title">Skala Cantril — Pengasuh</div>
+    <p style="font-size:.875rem; color:var(--color-text-secondary); margin-bottom:14px; line-height:1.5;">
+      "Kalau baik-buruknya hidup Anda sebagai <strong>pengasuh</strong> diukur seperti anak tangga (1 paling buruk sampai 10 paling sempurna), Anda di anak tangga berapa?"
+    </p>
+    <div class="cantril-wrap">
+      <div class="cantril-row" id="cantril-pengasuh"></div>
+    </div>
+    <div class="cantril-labels">
+      <span>1 — Paling buruk</span>
+      <span>10 — Paling sempurna</span>
+    </div>
+
+    <div class="form-group" style="margin-top:16px;">
+      <label class="form-label">Apa yang membantu hidup Anda menjadi lebih baik (naik tangga)?</label>
+      <textarea class="form-textarea" id="f-cantril-p-naik" placeholder="Tuliskan faktor positif yang diharapkan pengasuh…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Apa yang membuat hidup Anda turun tangga?</label>
+      <textarea class="form-textarea" id="f-cantril-p-turun" placeholder="Tuliskan hambatan/tantangan yang dirasakan pengasuh…"></textarea>
+    </div>
+  </div>
+
+  <!-- 6. Cantril Scale — Anak -->
+  <div class="section-card">
+    <div class="section-title">Skala Cantril — Anak</div>
+    <p style="font-size:.875rem; color:var(--color-text-secondary); margin-bottom:14px; line-height:1.5;">
+      "Kalau baik-buruknya hidup Anda sebagai <strong>anak</strong> diukur seperti anak tangga (1 paling buruk sampai 10 paling sempurna), Anda di anak tangga berapa?"
+    </p>
+    <div class="cantril-wrap">
+      <div class="cantril-row" id="cantril-anak"></div>
+    </div>
+    <div class="cantril-labels">
+      <span>1 — Paling buruk</span>
+      <span>10 — Paling sempurna</span>
+    </div>
+
+    <div class="form-group" style="margin-top:16px;">
+      <label class="form-label">Apa yang membantu hidup anak menjadi lebih baik (naik tangga)?</label>
+      <textarea class="form-textarea" id="f-cantril-a-naik" placeholder="Tuliskan faktor positif yang diharapkan anak…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Apa yang membuat hidup anak turun tangga?</label>
+      <textarea class="form-textarea" id="f-cantril-a-turun" placeholder="Tuliskan hambatan/tantangan yang dirasakan anak…"></textarea>
+    </div>
+  </div>
+
+  <!-- 7. Dokumentasi -->
+  <div class="section-card">
+    <div class="section-title">Dokumentasi</div>
+
+    <div class="form-group">
+      <label class="form-label">Waktu Kunjungan CBR</label>
+      <input class="form-input" id="f-waktu-kunjungan" type="datetime-local">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Lokasi (GPS)</label>
+      <div class="gps-block" id="gps-widget">
+        <div class="gps-row">
+          <button class="gps-btn" id="gps-btn">📍 Ambil Lokasi</button>
+          <span class="gps-status" id="gps-status">Belum diambil</span>
+        </div>
+        <div class="gps-coords" id="gps-coords"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Foto Dokumentasi</label>
+      <div class="photo-upload" id="photo-trigger">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="12" cy="14" r="2"/></svg>
+        Tambah Foto
+      </div>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display:none">
+      <div class="photo-thumbs" id="photo-thumbs"></div>
+      <div class="form-hint">Maksimal 10MB per foto · akan dikompres otomatis</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Catatan Tambahan</label>
+      <textarea class="form-textarea" id="f-catatan" placeholder="Catatan observasi atau informasi tambahan dari kunjungan…"></textarea>
+    </div>
+  </div>
+
+</div><!-- /form-container -->
+
+<!-- ═══ SUBMIT BAR ═══════════════════════════════════════════ -->
+<div class="submit-bar">
+  <button class="btn-draft" id="btn-draft">💾 Draft</button>
+  <button class="btn-simpan" id="btn-simpan">Simpan Data</button>
+</div>
+
+<script src="app.js"></script>
+<script>
+/* ─── State ──────────────────────────────────────────────── */
+const state = {
+  anakId:    null,   // null = new, number = edit existing
+  gps:       null,
+  photos:    [],
+  cantrilP:  null,
+  cantrilA:  null,
+};
+
+/* ─── Init ───────────────────────────────────────────────── */
+async function init() {
+  const session = MDB.requireLogin();
+  if (!session) return;
+
+  // Fill session-based fields
+  document.getElementById('f-scn').value = session.scn  || '—';
+  document.getElementById('f-cbr').value = session.nama || '—';
+  document.getElementById('f-tgl-input').value = MDB.today();
+
+  // Check if editing existing record
+  const params  = new URLSearchParams(location.search);
+  const editId  = params.get('id');
+  if (editId) {
+    state.anakId = parseInt(editId, 10);
+    await loadExisting(state.anakId);
+  } else {
+    document.getElementById('topbar-sub').textContent = 'Tambah anak baru';
+    // default waktu kunjungan = now
+    const now = new Date();
+    const local = now.toISOString().slice(0, 16);
+    document.getElementById('f-waktu-kunjungan').value = local;
+  }
+
+  // Init offline indicator (no badge in this page, just a toast on offline)
+  window.addEventListener('offline', () => MDB.showToast('⚡ Offline — data disimpan lokal'));
+  window.addEventListener('online',  () => MDB.showToast('🟢 Kembali online'));
+}
+
+/* ─── Load existing record ───────────────────────────────── */
+async function loadExisting(id) {
+  const rec = await MDB.dbGet('anak', id);
+  if (!rec) { MDB.showToast('Data anak tidak ditemukan'); history.back(); return; }
+
+  document.getElementById('topbar-sub').textContent = rec.nama || '—';
+  document.getElementById('f-status').value = rec.status || '—';
+  document.getElementById('anak-id-wrap').style.display = '';
+  document.getElementById('anak-id-val').textContent = id;
+
+  // Fill fields
+  setVal('f-nama',            rec.nama);
+  setVal('f-tgl-lahir',       rec.tgl_lahir);
+  setVal('f-kampung',         rec.kampung);
+  setVal('f-desa',            rec.desa);
+  setVal('f-pengasuh',        rec.nama_pengasuh);
+  setVal('f-pengasuh-lainnya', rec.pengasuh_lainnya);
+  setVal('f-disabilitas-lainnya', rec.disabilitas_lainnya);
+  setVal('f-faskes',          rec.faskes);
+  setVal('f-jenis-terapi',    rec.jenis_terapi);
+  setVal('f-pelaku-terapi',   rec.pelaku_terapi);
+  setVal('f-cantril-p-naik',  rec.cantril_p_naik);
+  setVal('f-cantril-p-turun', rec.cantril_p_turun);
+  setVal('f-cantril-a-naik',  rec.cantril_a_naik);
+  setVal('f-cantril-a-turun', rec.cantril_a_turun);
+  setVal('f-catatan',         rec.catatan);
+  setVal('f-waktu-kunjungan', rec.waktu_kunjungan);
+
+  // Pills
+  selectPill('pills-jk', rec.jenis_kelamin);
+  selectPill('pills-status-pengasuh', rec.status_pengasuh);
+  selectPill('pills-level',   rec.level_disabilitas);
+  selectPill('pills-epilepsi', rec.epilepsi);
+  selectPill('pills-pengobatan', rec.pengobatan);
+  selectPill('pills-terapi',  rec.terapi);
+
+  // Tags
+  if (rec.ragam_disabilitas)    selectTags('tags-disabilitas',   rec.ragam_disabilitas);
+  if (rec.detail_penglihatan)   selectTags('tags-penglihatan',   rec.detail_penglihatan);
+  if (rec.detail_pendengaran)   selectTags('tags-pendengaran',   rec.detail_pendengaran);
+  if (rec.detail_fisik)         selectTags('tags-fisik',         rec.detail_fisik);
+  if (rec.detail_intelektual)   selectTags('tags-intelektual',   rec.detail_intelektual);
+  if (rec.detail_ganda)         selectTags('tags-ganda',         rec.detail_ganda);
+  if (rec.layanan_pengobatan)   selectTags('tags-layanan-pengobatan', rec.layanan_pengobatan);
+
+  // Sub-fields visibility
+  if (rec.penglihatan_lainnya)  setVal('f-penglihatan-lainnya', rec.penglihatan_lainnya);
+  if (rec.pendengaran_lainnya)  setVal('f-pendengaran-lainnya', rec.pendengaran_lainnya);
+  if (rec.fisik_lainnya)        setVal('f-fisik-lainnya',       rec.fisik_lainnya);
+  if (rec.intelektual_lainnya)  setVal('f-intelektual-lainnya', rec.intelektual_lainnya);
+
+  // Cantril values
+  if (rec.cantril_pengasuh) setCantril('cantril-pengasuh', rec.cantril_pengasuh);
+  if (rec.cantril_anak)     setCantril('cantril-anak',     rec.cantril_anak);
+
+  // GPS
+  if (rec.gps) {
+    state.gps = rec.gps;
+    document.getElementById('gps-status').textContent = '✓ Lokasi tersimpan';
+    document.getElementById('gps-status').className   = 'gps-status ok';
+    document.getElementById('gps-coords').textContent = MDB.formatGPS(rec.gps);
+    document.getElementById('gps-btn').textContent = 'Perbarui';
+  }
+
+  // Update usia
+  updateUsia();
+  // Trigger visibility for sub-groups
+  updateSubGroups();
+  updateConditionalGroups();
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el && val != null) el.value = val;
+}
+function selectPill(groupId, val) {
+  if (!val) return;
+  document.querySelectorAll(`#${groupId} .pill`).forEach(p => {
+    p.classList.toggle('selected', p.dataset.value === val);
+  });
+}
+function selectTags(groupId, vals) {
+  if (!vals || !Array.isArray(vals)) return;
+  document.querySelectorAll(`#${groupId} .tag`).forEach(t => {
+    t.classList.toggle('selected', vals.includes(t.dataset.value));
+  });
+}
+function setCantril(id, val) {
+  document.querySelectorAll(`#${id} .cantril-btn`).forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.val) === val);
+  });
+}
+
+/* ─── Usia auto-calc ─────────────────────────────────────── */
+function updateUsia() {
+  const tgl = document.getElementById('f-tgl-lahir').value;
+  const umur = MDB.hitungUmur(tgl);
+  document.getElementById('f-usia').value = umur != null ? `${umur} tahun` : '—';
+}
+document.getElementById('f-tgl-lahir').addEventListener('change', updateUsia);
+
+/* ─── Pills single-select ────────────────────────────────── */
+function initPills(groupId, onChange) {
+  document.querySelectorAll(`#${groupId} .pill`).forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll(`#${groupId} .pill`).forEach(x => x.classList.remove('selected'));
+      p.classList.add('selected');
+      if (onChange) onChange(p.dataset.value);
+    });
+  });
+}
+
+function getPillVal(groupId) {
+  const sel = document.querySelector(`#${groupId} .pill.selected`);
+  return sel ? sel.dataset.value : null;
+}
+
+/* ─── Tags multi-select ──────────────────────────────────── */
+function initTagGroup(groupId, onChange) {
+  MDB.initTags(document.getElementById(groupId), onChange);
+}
+function getTagVals(groupId) {
+  return MDB.getSelectedTags(document.getElementById(groupId));
+}
+
+/* ─── Sub-group visibility ───────────────────────────────── */
+function updateSubGroups() {
+  const selected = getTagVals('tags-disabilitas');
+  show('sub-penglihatan',  selected.includes('Sensorik (penglihatan)'));
+  show('sub-pendengaran',  selected.includes('Sensorik (pendengaran dan bicara)'));
+  show('sub-fisik',        selected.includes('Fisik'));
+  show('sub-intelektual',  selected.includes('Intelektual'));
+  show('sub-ganda',        selected.includes('Ganda'));
+  show('grp-disabilitas-lainnya', selected.includes('Lainnya'));
+}
+
+function updateConditionalGroups() {
+  // Pengasuh lainnya
+  show('grp-pengasuh-lainnya', getPillVal('pills-status-pengasuh') === 'Lainnya');
+  // Pengobatan detail
+  show('grp-detail-pengobatan', getPillVal('pills-pengobatan') === 'Ya');
+  // Terapi detail
+  show('grp-detail-terapi', getPillVal('pills-terapi') === 'Ya');
+  // Sub-detail lainnya dalam disabilitas
+  const penglVals = getTagVals('tags-penglihatan');
+  show('grp-penglihatan-lainnya', penglVals.includes('lainnya'));
+  const dendVals  = getTagVals('tags-pendengaran');
+  show('grp-pendengaran-lainnya', dendVals.includes('lainnya'));
+  const fisikVals = getTagVals('tags-fisik');
+  show('grp-fisik-lainnya', fisikVals.includes('lainnya'));
+  const intelVals = getTagVals('tags-intelektual');
+  show('grp-intelektual-lainnya', intelVals.includes('lainnya'));
+}
+
+function show(id, visible) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = visible ? '' : 'none';
+}
+
+/* ─── Wire up pills ──────────────────────────────────────── */
+initPills('pills-jk');
+initPills('pills-status-pengasuh', updateConditionalGroups);
+initPills('pills-level');
+initPills('pills-epilepsi');
+initPills('pills-pengobatan', updateConditionalGroups);
+initPills('pills-terapi', updateConditionalGroups);
+
+/* ─── Wire up tag groups ─────────────────────────────────── */
+initTagGroup('tags-disabilitas', updateSubGroups);
+initTagGroup('tags-penglihatan', updateConditionalGroups);
+initTagGroup('tags-pendengaran', updateConditionalGroups);
+initTagGroup('tags-fisik', updateConditionalGroups);
+initTagGroup('tags-intelektual', updateConditionalGroups);
+initTagGroup('tags-ganda');
+initTagGroup('tags-layanan-pengobatan');
+
+/* ─── Cantril scales ─────────────────────────────────────── */
+function buildCantril(containerId, onSelect) {
+  const row = document.getElementById(containerId);
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'cantril-btn';
+    btn.dataset.val = i;
+    btn.textContent = i;
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.cantril-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if (onSelect) onSelect(i);
+    });
+    row.appendChild(btn);
+  }
+}
+buildCantril('cantril-pengasuh', v => { state.cantrilP = v; });
+buildCantril('cantril-anak',     v => { state.cantrilA = v; });
+
+/* ─── GPS ────────────────────────────────────────────────── */
+MDB.initGPSWidget(document.getElementById('gps-widget'), gps => { state.gps = gps; });
+
+/* ─── Photo ──────────────────────────────────────────────── */
+const photoWidget = MDB.initPhotoWidget(
+  document.getElementById('photo-thumbs').parentElement,
+  photos => { state.photos = photos; }
+);
+document.getElementById('photo-trigger').addEventListener('click', () => {
+  document.getElementById('photo-input').click();
+});
+
+/* ─── Back button ────────────────────────────────────────── */
+document.getElementById('btn-back').addEventListener('click', () => history.back());
+
+/* ─── Collect form data ──────────────────────────────────── */
+function collectData(isDraft) {
+  const nama = document.getElementById('f-nama').value.trim();
+
+  const data = {
+    // Meta
+    scn:          document.getElementById('f-scn').value,
+    cbr_worker:   document.getElementById('f-cbr').value,
+    tgl_input:    MDB.today(),
+    status:       isDraft ? 'draft' : 'aktif',
+    updated_at:   new Date().toISOString(),
+
+    // Identitas
+    nama,
+    tgl_lahir:    document.getElementById('f-tgl-lahir').value || null,
+    jenis_kelamin: getPillVal('pills-jk'),
+    kampung:      document.getElementById('f-kampung').value.trim() || null,
+    desa:         document.getElementById('f-desa').value.trim() || null,
+
+    // Pengasuh
+    nama_pengasuh:    document.getElementById('f-pengasuh').value.trim() || null,
+    status_pengasuh:  getPillVal('pills-status-pengasuh'),
+    pengasuh_lainnya: document.getElementById('f-pengasuh-lainnya').value.trim() || null,
+
+    // Disabilitas
+    ragam_disabilitas:   getTagVals('tags-disabilitas'),
+    detail_penglihatan:  getTagVals('tags-penglihatan'),
+    penglihatan_lainnya: document.getElementById('f-penglihatan-lainnya').value.trim() || null,
+    detail_pendengaran:  getTagVals('tags-pendengaran'),
+    pendengaran_lainnya: document.getElementById('f-pendengaran-lainnya').value.trim() || null,
+    detail_fisik:        getTagVals('tags-fisik'),
+    fisik_lainnya:       document.getElementById('f-fisik-lainnya').value.trim() || null,
+    detail_intelektual:  getTagVals('tags-intelektual'),
+    intelektual_lainnya: document.getElementById('f-intelektual-lainnya').value.trim() || null,
+    detail_ganda:        getTagVals('tags-ganda'),
+    disabilitas_lainnya: document.getElementById('f-disabilitas-lainnya').value.trim() || null,
+    level_disabilitas:   getPillVal('pills-level'),
+
+    // Kesehatan
+    epilepsi:         getPillVal('pills-epilepsi'),
+    pengobatan:       getPillVal('pills-pengobatan'),
+    faskes:           document.getElementById('f-faskes').value.trim() || null,
+    layanan_pengobatan: getTagVals('tags-layanan-pengobatan'),
+    terapi:           getPillVal('pills-terapi'),
+    jenis_terapi:     document.getElementById('f-jenis-terapi').value.trim() || null,
+    pelaku_terapi:    document.getElementById('f-pelaku-terapi').value.trim() || null,
+
+    // Cantril
+    cantril_pengasuh: state.cantrilP,
+    cantril_p_naik:   document.getElementById('f-cantril-p-naik').value.trim() || null,
+    cantril_p_turun:  document.getElementById('f-cantril-p-turun').value.trim() || null,
+    cantril_anak:     state.cantrilA,
+    cantril_a_naik:   document.getElementById('f-cantril-a-naik').value.trim() || null,
+    cantril_a_turun:  document.getElementById('f-cantril-a-turun').value.trim() || null,
+
+    // Dokumentasi
+    waktu_kunjungan: document.getElementById('f-waktu-kunjungan').value || null,
+    gps:             state.gps,
+    catatan:         document.getElementById('f-catatan').value.trim() || null,
+  };
+
+  // attach photos as dataUrls (stored in IndexedDB)
+  if (state.photos.length > 0) {
+    data.photos = state.photos.map(p => ({ name: p.name, dataUrl: p.dataUrl }));
+  }
+
+  // preserve id if editing
+  if (state.anakId) data.id = state.anakId;
+
+  return data;
+}
+
+/* ─── Validate ───────────────────────────────────────────── */
+function validate(data) {
+  if (!data.nama) { MDB.showToast('⚠️ Nama anak wajib diisi'); return false; }
+  if (!data.jenis_kelamin) { MDB.showToast('⚠️ Jenis kelamin wajib dipilih'); return false; }
+  if (!data.status_pengasuh) { MDB.showToast('⚠️ Status pengasuh wajib dipilih'); return false; }
+  if (!data.ragam_disabilitas.length) { MDB.showToast('⚠️ Ragam disabilitas wajib dipilih'); return false; }
+  if (!data.level_disabilitas) { MDB.showToast('⚠️ Level disabilitas wajib dipilih'); return false; }
+  return true;
+}
+
+/* ─── Save ───────────────────────────────────────────────── */
+async function saveData(isDraft) {
+  const data = collectData(isDraft);
+  if (!isDraft && !validate(data)) return;
+
+  MDB.showSync('Menyimpan data…');
+  try {
+    const id = await MDB.dbPut('anak', data);
+    await MDB.addToSyncQueue('anak', id || state.anakId);
+    MDB.hideSync();
+    MDB.showToast(isDraft ? '✓ Draft disimpan' : '✓ Data anak tersimpan!');
+    setTimeout(() => history.back(), 1000);
+  } catch (err) {
+    MDB.hideSync();
+    MDB.showToast('⚠️ Gagal menyimpan: ' + (err.message || 'Error'));
+  }
+}
+
+document.getElementById('btn-draft').addEventListener('click',  () => saveData(true));
+document.getElementById('btn-simpan').addEventListener('click', () => saveData(false));
+
+/* ─── Start ──────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>

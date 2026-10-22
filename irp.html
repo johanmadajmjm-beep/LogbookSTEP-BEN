@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Perencanaan Anak BEN</title>
+<link rel="manifest" href="./manifest.json">
+<script src="./sw-register.js" defer></script>
+<style>
+/* ── Tokens ─────────────────────────────────────────── */
+:root {
+  --bg:        #F5F5F7;
+  --surface:   #FFFFFF;
+  --border:    #E0E0E0;
+  --fg:        #1A1A1A;
+  --fg-muted:  #6B6B6B;
+  --accent:    #1B6CA8;
+  --accent-dk: #145087;
+  --accent-lt: #EAF3FB;
+  --danger:    #C0392B;
+  --ok:        #1A7A4A;
+  --ok-bg:     #E8F7EF;
+  --warn-bg:   #FFF8E1;
+  --warn-fg:   #7B5800;
+  --tujuan1:   #1B6CA8;
+  --tujuan2:   #7B3FA0;
+  --tujuan3:   #B05C1A;
+  --radius:    12px;
+  --topbar-h:  56px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #111214;
+    --surface:   #1C1E21;
+    --border:    #2E3035;
+    --fg:        #E8E8EA;
+    --fg-muted:  #8A8D92;
+    --accent:    #5BA3E0;
+    --accent-dk: #4A8CC5;
+    --accent-lt: #162233;
+    --danger:    #E05C5C;
+    --ok:        #4DB37A;
+    --ok-bg:     #0E2A1A;
+    --warn-bg:   #2A2200;
+    --warn-fg:   #EABF56;
+    --tujuan1:   #5BA3E0;
+    --tujuan2:   #B07DD6;
+    --tujuan3:   #E08848;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #111214;
+  --surface:   #1C1E21;
+  --border:    #2E3035;
+  --fg:        #E8E8EA;
+  --fg-muted:  #8A8D92;
+  --accent:    #5BA3E0;
+  --accent-dk: #4A8CC5;
+  --accent-lt: #162233;
+  --danger:    #E05C5C;
+  --ok:        #4DB37A;
+  --ok-bg:     #0E2A1A;
+  --warn-bg:   #2A2200;
+  --warn-fg:   #EABF56;
+  --tujuan1:   #5BA3E0;
+  --tujuan2:   #B07DD6;
+  --tujuan3:   #E08848;
+  color-scheme: dark;
+}
+
+/* ── Reset ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  padding-top: var(--topbar-h);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  padding-left:  max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+
+/* ── Topbar ─────────────────────────────────────────── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 max(16px, env(safe-area-inset-left, 0px));
+  gap: 12px;
+  z-index: 100;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.topbar-back {
+  background: none; border: none; color: #fff;
+  font-size: 22px; cursor: pointer; padding: 4px 8px;
+  line-height: 1; border-radius: 6px; flex-shrink: 0;
+}
+.topbar-back:hover { background: rgba(255,255,255,.15); }
+.topbar-title { font-size: 17px; font-weight: 600; flex: 1; }
+.topbar-badge {
+  font-size: 11px; padding: 3px 8px; border-radius: 20px;
+  background: rgba(255,255,255,.2);
+}
+
+/* ── Content ────────────────────────────────────────── */
+.content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Cards ──────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 16px 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.card-body {
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Tujuan cards (colored left border) ─────────────── */
+.tujuan-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.tujuan-card.t1 { border-left: 4px solid var(--tujuan1); }
+.tujuan-card.t2 { border-left: 4px solid var(--tujuan2); }
+.tujuan-card.t3 { border-left: 4px solid var(--tujuan3); }
+.tujuan-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 0;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.tujuan-header.t1 { color: var(--tujuan1); }
+.tujuan-header.t2 { color: var(--tujuan2); }
+.tujuan-header.t3 { color: var(--tujuan3); }
+.tujuan-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.t1 .tujuan-num { background: var(--tujuan1); }
+.t2 .tujuan-num { background: var(--tujuan2); }
+.t3 .tujuan-num { background: var(--tujuan3); }
+
+/* collapsible tujuan sections */
+.tujuan-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.tujuan-section-toggle {
+  width: 100%;
+  background: none; border: none;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 13px; font-weight: 600;
+  color: var(--fg-muted);
+  cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.tujuan-section-toggle:hover { color: var(--fg); }
+.tujuan-section-toggle .chevron {
+  transition: transform .2s;
+  font-size: 11px;
+}
+.tujuan-section-toggle.open .chevron { transform: rotate(180deg); }
+.tujuan-section-body {
+  padding: 0 16px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.tujuan-section-body.hidden { display: none; }
+
+/* ── Form fields ────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 13px; font-weight: 600; color: var(--fg-muted);
+}
+.field label .req { color: var(--danger); margin-left: 2px; }
+.field input, .field select, .field textarea {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  transition: border-color .15s;
+  width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+.field input[readonly] { opacity: .65; cursor: default; }
+.field textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; min-width: 0; }
+.field-hint {
+  font-size: 12px; color: var(--fg-muted);
+  line-height: 1.4; margin-top: 2px;
+}
+
+/* ── ICF Ringkasan (read-only) ──────────────────────── */
+.icf-summary-box {
+  background: var(--accent-lt);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.icf-summary-box .no-data {
+  font-size: 13px; color: var(--fg-muted);
+  font-style: italic;
+}
+.icf-domain-row {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.icf-domain-label {
+  font-size: 12px; font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.icf-domain-text {
+  font-size: 13.5px; color: var(--fg); line-height: 1.5;
+}
+.icf-domain-empty {
+  font-size: 13px; color: var(--fg-muted); font-style: italic;
+}
+.icf-meta {
+  font-size: 11.5px; color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 8px; margin-top: 4px;
+}
+
+/* ── Pihak terlibat tags ─────────────────────────────── */
+.pihak-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 10px 0 4px;
+}
+.pihak-tag {
+  padding: 5px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+  user-select: none;
+  background: var(--bg);
+  color: var(--fg-muted);
+}
+.pihak-tag.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.pihak-tag.t2.selected { background: var(--tujuan2); border-color: var(--tujuan2); }
+.pihak-tag.t3.selected { background: var(--tujuan3); border-color: var(--tujuan3); }
+
+/* rencana per pihak (expanded when selected) */
+.rencana-pihak-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.rencana-pihak-item { display: flex; flex-direction: column; gap: 3px; }
+.rencana-pihak-item label {
+  font-size: 12.5px; font-weight: 600; color: var(--fg-muted);
+}
+.rencana-pihak-item textarea {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--fg);
+  resize: vertical;
+  min-height: 68px;
+  width: 100%;
+}
+.rencana-pihak-item textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+.rencana-pihak-empty {
+  font-size: 13px; color: var(--fg-muted);
+  font-style: italic;
+  padding: 6px 0;
+}
+
+/* ── ABC note ───────────────────────────────────────── */
+.abc-note {
+  background: var(--warn-bg);
+  border-left: 3px solid var(--warn-fg);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--warn-fg);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.abc-note strong { font-weight: 700; }
+
+/* ── Anak info box ───────────────────────────────────── */
+.anak-info-box {
+  display: none;
+  background: var(--ok-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  line-height: 1.6;
+}
+.anak-info-box strong { color: var(--fg); font-size: 14px; }
+.anak-info-box.show { display: block; }
+
+/* ── GPS widget ─────────────────────────────────────── */
+.gps-block { display: flex; flex-direction: column; gap: 6px; }
+.gps-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gps-btn {
+  padding: 8px 16px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0;
+}
+.gps-btn:hover { background: var(--accent-dk); }
+.gps-btn:disabled { opacity: .6; cursor: default; }
+.gps-status { font-size: 13px; color: var(--fg-muted); }
+.gps-status.ok   { color: var(--ok); }
+.gps-status.wait { color: var(--accent); }
+.gps-coords { font-size: 12.5px; color: var(--fg-muted); font-family: monospace; word-break: break-all; }
+
+/* ── Photo widget ───────────────────────────────────── */
+.photo-group { display: flex; flex-direction: column; gap: 6px; }
+.photo-group label { font-size: 13px; font-weight: 600; color: var(--fg-muted); }
+.photo-upload {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--fg-muted); font-size: 13px;
+  transition: border-color .15s, color .15s;
+}
+.photo-upload:hover { border-color: var(--accent); color: var(--accent); }
+.photo-upload input[type="file"] { display: none; }
+.photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.photo-thumb {
+  position: relative; width: 64px; height: 64px;
+  border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb-rm {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(0,0,0,.6); color: #fff; border: none;
+  border-radius: 50%; width: 18px; height: 18px;
+  font-size: 12px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Submit bar ─────────────────────────────────────── */
+.submit-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px max(16px, env(safe-area-inset-left, 0px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 10px;
+  z-index: 90;
+}
+.btn {
+  flex: 1; padding: 13px; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn-draft { background: var(--bg); color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-save  { background: var(--accent); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* ── Toast / Sync ───────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #1A1A1A; color: #fff;
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 14px; opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none; z-index: 200;
+  max-width: calc(100vw - 32px); white-space: normal; text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#sync-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; color: #fff;
+}
+#sync-overlay.show { display: flex; }
+.sync-spinner {
+  width: 40px; height: 40px;
+  border: 4px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-text { font-size: 16px; font-weight: 600; }
+.sync-sub  { font-size: 13px; opacity: .7; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <button class="topbar-back" onclick="history.back()">‹</button>
+  <span class="topbar-title">Perencanaan Anak BEN (IRP)</span>
+  <span class="topbar-badge" id="topbar-badge">⚡ Offline</span>
+</div>
+
+<div class="content">
+
+  <!-- ── Card 1: Info ─────────────────────────────── -->
+  <div class="card">
+    <div class="card-header">📋 Info Pendataan</div>
+    <div class="card-body">
+      <div class="field-row">
+        <div class="field">
+          <label>SCN</label>
+          <input type="text" id="info-scn" readonly>
+        </div>
+        <div class="field">
+          <label>CBR Worker</label>
+          <input type="text" id="info-cbr" readonly>
+        </div>
+      </div>
+      <div class="field">
+        <label>Tanggal Penyusunan Rencana <span class="req">*</span></label>
+        <input type="date" id="tanggal">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 2: Pilih Anak ───────────────────────── -->
+  <div class="card">
+    <div class="card-header">👧 Pilih Anak</div>
+    <div class="card-body">
+      <div class="field">
+        <label>Anak <span class="req">*</span></label>
+        <select id="anak-select">
+          <option value="">— Memuat data anak… —</option>
+        </select>
+      </div>
+      <div id="anak-info-box" class="anak-info-box"></div>
+    </div>
+  </div>
+
+  <!-- ── Card 3: Ringkasan ICF (read-only) ────────── -->
+  <div class="card">
+    <div class="card-header">🔍 Ringkasan Asesmen ICF</div>
+    <div class="card-body">
+      <div class="field-hint">Data dari observasi terakhir anak yang dipilih. Gunakan ini sebagai dasar perencanaan.</div>
+      <div class="icf-summary-box" id="icf-summary">
+        <span class="no-data">Pilih anak untuk memuat ringkasan ICF…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 4: Prioritas Kesulitan ──────────────── -->
+  <div class="card">
+    <div class="card-header">⚡ Prioritas Kesulitan</div>
+    <div class="card-body">
+      <div class="field">
+        <label>Kesulitan yang diprioritaskan menurut pengasuh/anak <span class="req">*</span></label>
+        <textarea id="prioritas-pengasuh" placeholder="Tuliskan kesulitan utama menurut pengasuh atau anak…" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>Kesulitan yang diprioritaskan menurut pekerja lapangan</label>
+        <textarea id="prioritas-lapangan" placeholder="Jika berbeda dengan orang tua, diskusikan dahulu — pengambilan keputusan bersama…" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>Kesepakatan kesulitan yang menjadi prioritas untuk ditangani <span class="req">*</span></label>
+        <textarea id="prioritas-kesepakatan" placeholder="Tuliskan hasil kesepakatan bersama tentang prioritas penanganan…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 5: Tujuan 1 ─────────────────────────── -->
+  <div class="tujuan-card t1" id="card-tujuan-1">
+    <div class="tujuan-header t1">
+      <span class="tujuan-num">1</span>Tujuan 1 — Fokus 1–3 Bulan ke Depan
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Apa yang ingin difokuskan dalam 1–3 bulan ke depan? <span class="req">*</span></label>
+        <textarea id="tujuan-1" placeholder="Tuliskan tujuan / fokus utama pertama…" rows="3"></textarea>
+      </div>
+    </div>
+
+    <!-- Seksi: Pihak Terlibat -->
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        👥 Siapa yang terlibat dalam rencana ini?
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body" id="pihak-1-body">
+        <div class="field-hint">Pilih semua pihak yang akan terlibat dalam rencana tujuan 1.</div>
+        <div class="pihak-tags" id="pihak-tags-1"></div>
+        <div class="field">
+          <label>Pihak lainnya (ketik manual)</label>
+          <input type="text" id="pihak-1-lainnya" placeholder="Nama pihak lain yang terlibat…">
+        </div>
+      </div>
+    </div>
+
+    <!-- Seksi: Rencana per Pihak -->
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        📝 Rencana bersama setiap pihak
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body" id="rencana-pihak-1-body">
+        <div class="rencana-pihak-list" id="rencana-pihak-1">
+          <span class="rencana-pihak-empty">Pilih pihak terlibat terlebih dahulu…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seksi: Cara/Tempat/Waktu + ABC -->
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle open" onclick="toggleSection(this)">
+        🗓️ Pelaksanaan & Rencana Aksi
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body" id="aksi-1-body">
+        <div class="field">
+          <label>Bagaimana rencana ini dilakukan?</label>
+          <textarea id="cara-1" placeholder="Jelaskan cara/metode pelaksanaan…" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label>Dimana rencana ini dilaksanakan?</label>
+          <input type="text" id="tempat-1" placeholder="Lokasi pelaksanaan…">
+        </div>
+        <div class="field">
+          <label>Kapan rencana ini dilaksanakan?</label>
+          <input type="text" id="waktu-1" placeholder="Misalnya: Setiap Senin, minggu pertama bulan…">
+        </div>
+        <div class="abc-note">
+          <strong>📐 Panduan Rumus ABC:</strong><br>
+          <strong>A</strong> = Antecedent (kondisi sebelum / pemicu)<br>
+          <strong>B</strong> = Behavior (perilaku / tindakan yang diharapkan)<br>
+          <strong>C</strong> = Consequence (konsekuensi / hasil yang diinginkan)
+        </div>
+        <div class="field">
+          <label>Rencana Aksi (Rumus ABC) — Tujuan 1</label>
+          <textarea id="abc-1" placeholder="Gunakan panduan rumus ABC di atas untuk menuliskan rencana aksi…" rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 6: Tujuan 2 ─────────────────────────── -->
+  <div class="tujuan-card t2" id="card-tujuan-2">
+    <div class="tujuan-header t2">
+      <span class="tujuan-num">2</span>Tujuan 2 — Fokus 1–3 Bulan ke Depan
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Apa yang ingin difokuskan dalam 1–3 bulan ke depan?</label>
+        <textarea id="tujuan-2" placeholder="Tuliskan tujuan / fokus utama kedua (opsional)…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        👥 Siapa yang terlibat dalam rencana ini?
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="pihak-2-body">
+        <div class="pihak-tags" id="pihak-tags-2"></div>
+        <div class="field">
+          <label>Pihak lainnya (ketik manual)</label>
+          <input type="text" id="pihak-2-lainnya" placeholder="Nama pihak lain…">
+        </div>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        📝 Rencana bersama setiap pihak
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="rencana-pihak-2-body">
+        <div class="rencana-pihak-list" id="rencana-pihak-2">
+          <span class="rencana-pihak-empty">Pilih pihak terlibat terlebih dahulu…</span>
+        </div>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        🗓️ Pelaksanaan & Rencana Aksi
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="aksi-2-body">
+        <div class="field">
+          <label>Bagaimana rencana ini dilakukan?</label>
+          <textarea id="cara-2" placeholder="Cara/metode pelaksanaan…" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label>Dimana rencana ini dilaksanakan?</label>
+          <input type="text" id="tempat-2" placeholder="Lokasi…">
+        </div>
+        <div class="field">
+          <label>Kapan rencana ini dilaksanakan?</label>
+          <input type="text" id="waktu-2" placeholder="Waktu/jadwal…">
+        </div>
+        <div class="abc-note">
+          <strong>📐 Panduan Rumus ABC</strong><br>
+          <strong>A</strong> = Antecedent · <strong>B</strong> = Behavior · <strong>C</strong> = Consequence
+        </div>
+        <div class="field">
+          <label>Rencana Aksi (Rumus ABC) — Tujuan 2</label>
+          <textarea id="abc-2" placeholder="Rencana aksi rumus ABC…" rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 7: Tujuan 3 ─────────────────────────── -->
+  <div class="tujuan-card t3" id="card-tujuan-3">
+    <div class="tujuan-header t3">
+      <span class="tujuan-num">3</span>Tujuan 3 — Fokus 1–3 Bulan ke Depan
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Apa yang ingin difokuskan dalam 1–3 bulan ke depan?</label>
+        <textarea id="tujuan-3" placeholder="Tuliskan tujuan / fokus utama ketiga (opsional)…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        👥 Siapa yang terlibat dalam rencana ini?
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="pihak-3-body">
+        <div class="pihak-tags" id="pihak-tags-3"></div>
+        <div class="field">
+          <label>Pihak lainnya (ketik manual)</label>
+          <input type="text" id="pihak-3-lainnya" placeholder="Nama pihak lain…">
+        </div>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        📝 Rencana bersama setiap pihak
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="rencana-pihak-3-body">
+        <div class="rencana-pihak-list" id="rencana-pihak-3">
+          <span class="rencana-pihak-empty">Pilih pihak terlibat terlebih dahulu…</span>
+        </div>
+      </div>
+    </div>
+    <div class="tujuan-section">
+      <button class="tujuan-section-toggle" onclick="toggleSection(this)">
+        🗓️ Pelaksanaan & Rencana Aksi
+        <span class="chevron">▼</span>
+      </button>
+      <div class="tujuan-section-body hidden" id="aksi-3-body">
+        <div class="field">
+          <label>Bagaimana rencana ini dilakukan?</label>
+          <textarea id="cara-3" placeholder="Cara/metode pelaksanaan…" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label>Dimana rencana ini dilaksanakan?</label>
+          <input type="text" id="tempat-3" placeholder="Lokasi…">
+        </div>
+        <div class="field">
+          <label>Kapan rencana ini dilaksanakan?</label>
+          <input type="text" id="waktu-3" placeholder="Waktu/jadwal…">
+        </div>
+        <div class="abc-note">
+          <strong>📐 Panduan Rumus ABC</strong><br>
+          <strong>A</strong> = Antecedent · <strong>B</strong> = Behavior · <strong>C</strong> = Consequence
+        </div>
+        <div class="field">
+          <label>Rencana Aksi (Rumus ABC) — Tujuan 3</label>
+          <textarea id="abc-3" placeholder="Rencana aksi rumus ABC…" rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 8: Dokumentasi ──────────────────────── -->
+  <div class="card">
+    <div class="card-header">📸 Dokumentasi</div>
+    <div class="card-body">
+
+      <div class="photo-group">
+        <label>Foto Anak/Remaja Disabilitas</label>
+        <div class="photo-upload" id="foto-anak-widget" onclick="document.getElementById('foto-anak-input').click()">
+          <input type="file" id="foto-anak-input" accept="image/*" multiple>
+          📷 Ketuk untuk tambah foto anak
+          <div style="font-size:11px;margin-top:3px;opacity:.7">Maks. 10 MB per foto</div>
+        </div>
+        <div class="photo-thumbs" id="foto-anak-thumbs"></div>
+      </div>
+
+      <div class="photo-group">
+        <label>Foto Keluarga</label>
+        <div class="photo-upload" id="foto-keluarga-widget" onclick="document.getElementById('foto-keluarga-input').click()">
+          <input type="file" id="foto-keluarga-input" accept="image/*" multiple>
+          📷 Ketuk untuk tambah foto keluarga
+          <div style="font-size:11px;margin-top:3px;opacity:.7">Maks. 10 MB per foto</div>
+        </div>
+        <div class="photo-thumbs" id="foto-keluarga-thumbs"></div>
+      </div>
+
+      <div class="photo-group">
+        <label>Foto Lingkungan</label>
+        <div class="photo-upload" id="foto-lingkungan-widget" onclick="document.getElementById('foto-lingkungan-input').click()">
+          <input type="file" id="foto-lingkungan-input" accept="image/*" multiple>
+          📷 Ketuk untuk tambah foto lingkungan
+          <div style="font-size:11px;margin-top:3px;opacity:.7">Maks. 10 MB per foto</div>
+        </div>
+        <div class="photo-thumbs" id="foto-lingkungan-thumbs"></div>
+      </div>
+
+      <div class="field">
+        <label>Lokasi Penyusunan Rencana (GPS)</label>
+        <div class="gps-block" id="gps-block">
+          <div class="gps-row">
+            <button class="gps-btn" id="gps-btn">📍 Ambil Lokasi</button>
+            <span class="gps-status" id="gps-status"></span>
+          </div>
+          <div class="gps-coords" id="gps-coords"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Catatan Tambahan</label>
+        <textarea id="catatan" placeholder="Catatan lainnya (opsional)…" rows="3"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- SUBMIT BAR -->
+<div class="submit-bar">
+  <button class="btn btn-draft" id="btn-draft" onclick="handleSave('draft')">Simpan Draft</button>
+  <button class="btn btn-save"  id="btn-save"  onclick="handleSave('aktif')">✓ Simpan IRP</button>
+</div>
+
+<div id="toast"></div>
+<div id="sync-overlay">
+  <div class="sync-spinner"></div>
+  <div class="sync-text">Menyimpan data…</div>
+  <div class="sync-sub">Data tersimpan offline, akan sinkron saat ada sinyal</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+'use strict';
+
+/* ── Daftar pihak terlibat ───────────────────────────── */
+const PIHAK_LIST = [
+  'Ayah','Ibu','Saudara kandung','Kakek/Nenek (tinggal serumah)',
+  'Kakek/Nenek (tidak serumah)','Paman/Bibi','Sepupu','Keluarga besar lainnya',
+  'Tetangga dekat','Teman sebaya anak','Kelompok bermain anak','Warga kampung/lingkungan',
+  'Kepala suku/Tu\'a Golo','Tu\'a Teno (penguasa tanah adat)','Tokoh adat kampung',
+  'Anggota kerabat klan (Wa\'u)',
+  'Pastor/Romo','Suster/Bruder','Katekis','Prodiakon',
+  'Kelompok doa/Legio Maria','Pengurus gereja','Guru agama',
+  'Guru kelas','Wali kelas','Kepala sekolah',
+  'Guru Pendamping Khusus (GPK)','Guru PAUD/TK','Pengelola PAUD','Teman sekelas',
+  'Bidan desa','Perawat Puskesmas','Dokter Puskesmas',
+  'Kader Posyandu','Kader Posbindu','Dukun beranak','Fisioterapis',
+  'Kepala desa','Sekretaris desa','Ketua RT/RW','Kasi Kesejahteraan desa',
+  'PKK desa','Karang Taruna','BPD',
+  'Dinas Sosial','Dinas Kesehatan','Dinas Pendidikan',
+  'UPTD Perlindungan Sosial','P2TP2A',
+  'Sub Cluster Network (SCN)','CBR Worker lain','Kader disabilitas desa',
+  'Kelompok tani','Koperasi/simpan pinjam','OMK (Orang Muda Katolik)',
+  'Organisasi perempuan','CBM Global','Ayo Indonesia',
+  'Dokter spesialis','LSM lokal lainnya','Yayasan mitra SCN',
+  'Radio lokal','Tokoh media sosial lokal',
+];
+
+/* ── State ────────────────────────────────────────────── */
+const state = {
+  session: null,
+  editId:  null,
+  anakId:  null,
+  gps:     null,
+  // photos: { anak: [], keluarga: [], lingkungan: [] }
+  photos:  { anak: [], keluarga: [], lingkungan: [] },
+  // pihak selected per tujuan
+  pihak:   { 1: new Set(), 2: new Set(), 3: new Set() },
+};
+
+/* ── Boot ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+  state.session = MDB.requireLogin();
+  if (!state.session) return;
+
+  MDB.initOfflineIndicator(document.getElementById('topbar-badge'));
+
+  document.getElementById('info-scn').value = state.session.scn  || '';
+  document.getElementById('info-cbr').value = state.session.nama || '';
+  document.getElementById('tanggal').value  = MDB.today();
+
+  // Build pihak tag pickers for all 3 tujuan
+  [1, 2, 3].forEach(t => buildPihakTags(t));
+
+  // Init photo widgets
+  initPhotoGroup('anak');
+  initPhotoGroup('keluarga');
+  initPhotoGroup('lingkungan');
+
+  // GPS
+  MDB.initGPSWidget(document.getElementById('gps-block'), gps => { state.gps = gps; });
+
+  // Edit mode
+  const params = new URLSearchParams(location.search);
+  const editId = params.get('id');
+  if (editId) {
+    state.editId = parseInt(editId, 10);
+    await loadExisting(state.editId);
+  }
+
+  // Load anak
+  await loadAnakDropdown();
+});
+
+/* ── Collapsible sections ─────────────────────────────── */
+function toggleSection(btn) {
+  const body = btn.nextElementSibling;
+  const isOpen = btn.classList.contains('open');
+  if (isOpen) {
+    body.classList.add('hidden');
+    btn.classList.remove('open');
+  } else {
+    body.classList.remove('hidden');
+    btn.classList.add('open');
+  }
+}
+
+/* ── Pihak tags ───────────────────────────────────────── */
+function buildPihakTags(t) {
+  const container = document.getElementById(`pihak-tags-${t}`);
+  PIHAK_LIST.forEach(nama => {
+    const tag = document.createElement('span');
+    tag.className = `pihak-tag t${t}`;
+    tag.textContent = nama;
+    tag.addEventListener('click', () => {
+      if (state.pihak[t].has(nama)) {
+        state.pihak[t].delete(nama);
+        tag.classList.remove('selected');
+      } else {
+        state.pihak[t].add(nama);
+        tag.classList.add('selected');
+      }
+      rebuildRencanaPihak(t);
+    });
+    container.appendChild(tag);
+  });
+}
+
+function rebuildRencanaPihak(t) {
+  const container = document.getElementById(`rencana-pihak-${t}`);
+  const selected  = Array.from(state.pihak[t]);
+  // Also include lainnya if typed
+  const lainnya = (document.getElementById(`pihak-${t}-lainnya`)?.value || '').trim();
+
+  const allPihak = lainnya
+    ? [...selected, ...lainnya.split(',').map(s => s.trim()).filter(Boolean)]
+    : selected;
+
+  container.innerHTML = '';
+  if (!allPihak.length) {
+    container.innerHTML = '<span class="rencana-pihak-empty">Pilih pihak terlibat terlebih dahulu…</span>';
+    return;
+  }
+  allPihak.forEach(nama => {
+    const key = `rencana_${t}_${nama.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const existing = document.getElementById(key)?.value || '';
+    const item = document.createElement('div');
+    item.className = 'rencana-pihak-item';
+    item.innerHTML = `
+      <label>${nama}</label>
+      <textarea id="${key}" placeholder="Jelaskan rencana konkret bersama ${nama}…">${existing}</textarea>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// Rebuild rencana when lainnya is typed
+[1, 2, 3].forEach(t => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById(`pihak-${t}-lainnya`);
+    if (el) el.addEventListener('blur', () => rebuildRencanaPihak(t));
+  });
+});
+
+/* ── Anak dropdown ─────────────────────────────────────── */
+async function loadAnakDropdown() {
+  const sel = document.getElementById('anak-select');
+  try {
+    const semua = await MDB.dbGetAll('anak', 'scn_id', state.session.scn);
+    const aktif = semua.filter(a => a.status !== 'hapus');
+    sel.innerHTML = '';
+    if (!aktif.length) {
+      sel.innerHTML = '<option value="">— Belum ada anak terdaftar —</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— Pilih anak —</option>';
+    aktif.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.nama_anak || `Anak #${a.id}`;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', async () => {
+      const id = parseInt(sel.value, 10);
+      state.anakId = id || null;
+      const anak = aktif.find(a => a.id === id);
+      updateAnakInfo(anak);
+      if (id) await loadICFSummary(id);
+      else clearICFSummary();
+    });
+    if (state.editId && state.anakId) {
+      sel.value = state.anakId;
+      const anak = aktif.find(a => a.id === state.anakId);
+      updateAnakInfo(anak);
+      await loadICFSummary(state.anakId);
+    }
+  } catch {
+    sel.innerHTML = '<option value="">— Gagal memuat anak —</option>';
+  }
+}
+
+function updateAnakInfo(anak) {
+  const box = document.getElementById('anak-info-box');
+  if (!anak) { box.className = 'anak-info-box'; return; }
+  const umur = MDB.hitungUmur(anak.tgl_lahir);
+  box.innerHTML = `<strong>${anak.nama_anak || '—'}</strong><br>${anak.jenis_kelamin || '—'} · ${umur != null ? umur + ' tahun' : '—'} · ${anak.kampung || '—'}`;
+  box.className = 'anak-info-box show';
+}
+
+/* ── ICF Summary ────────────────────────────────────────── */
+async function loadICFSummary(anakId) {
+  const box = document.getElementById('icf-summary');
+  box.innerHTML = '<span class="no-data">Memuat data observasi…</span>';
+  try {
+    const records = await MDB.dbGetAll('observasi', 'anak_id', anakId);
+    if (!records || !records.length) {
+      box.innerHTML = '<span class="no-data">Belum ada data observasi ICF untuk anak ini.</span>';
+      return;
+    }
+    // Ambil yang terbaru berdasarkan tanggal_kunjungan atau created_at
+    records.sort((a, b) => {
+      const da = a.tanggal_kunjungan || a.created_at || '';
+      const db = b.tanggal_kunjungan || b.created_at || '';
+      return db.localeCompare(da);
+    });
+    const latest = records[0];
+    const tgl = latest.tanggal_kunjungan
+      ? MDB.formatDate(latest.tanggal_kunjungan)
+      : (latest.created_at ? MDB.formatDate(latest.created_at) : '—');
+
+    const domains = [
+      { key: 'domain_sfb', label: '1. Struktur & Fungsi Tubuh' },
+      { key: 'domain_kp',  label: '2. Kegiatan & Partisipasi' },
+      { key: 'domain_fp',  label: '3. Faktor Personal' },
+      { key: 'domain_fl',  label: '4. Faktor Lingkungan' },
+    ];
+
+    box.innerHTML = domains.map(d => `
+      <div class="icf-domain-row">
+        <div class="icf-domain-label">${d.label}</div>
+        ${latest[d.key]
+          ? `<div class="icf-domain-text">${escHtml(latest[d.key])}</div>`
+          : `<div class="icf-domain-empty">Tidak diisi pada observasi ini</div>`}
+      </div>
+    `).join('') + `<div class="icf-meta">📅 Dari observasi tanggal ${tgl}${records.length > 1 ? ` · ${records.length} observasi tersedia` : ''}</div>`;
+
+  } catch {
+    box.innerHTML = '<span class="no-data">Gagal memuat data observasi.</span>';
+  }
+}
+
+function clearICFSummary() {
+  document.getElementById('icf-summary').innerHTML = '<span class="no-data">Pilih anak untuk memuat ringkasan ICF…</span>';
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+/* ── Photo groups ───────────────────────────────────────── */
+function initPhotoGroup(type) {
+  const input  = document.getElementById(`foto-${type}-input`);
+  const thumbs = document.getElementById(`foto-${type}-thumbs`);
+  if (!input) return;
+
+  input.addEventListener('change', async () => {
+    for (const file of Array.from(input.files || [])) {
+      if (file.size > 10 * 1024 * 1024) { MDB.showToast(`⚠️ ${file.name} terlalu besar`); continue; }
+      try {
+        MDB.showToast('🔄 Mengompresi foto…');
+        const compressed = await MDB.compressPhoto(file);
+        const dataUrl    = await MDB.fileToDataUrl(compressed);
+        state.photos[type].push({ dataUrl, name: file.name });
+        addThumb(dataUrl, state.photos[type].length - 1, type, thumbs);
+      } catch { MDB.showToast('⚠️ Gagal proses foto'); }
+    }
+    input.value = '';
+  });
+}
+
+function addThumb(dataUrl, idx, type, thumbsEl) {
+  const div = document.createElement('div');
+  div.className = 'photo-thumb';
+  div.innerHTML = `<img src="${dataUrl}" alt="foto"><button class="photo-thumb-rm" data-idx="${idx}" data-type="${type}">×</button>`;
+  div.querySelector('.photo-thumb-rm').addEventListener('click', e => {
+    e.stopPropagation();
+    state.photos[type].splice(idx, 1);
+    const thumbs = document.getElementById(`foto-${type}-thumbs`);
+    thumbs.innerHTML = '';
+    state.photos[type].forEach((p, i) => addThumb(p.dataUrl, i, type, thumbs));
+  });
+  thumbsEl.appendChild(div);
+}
+
+/* ── Load existing ──────────────────────────────────────── */
+async function loadExisting(id) {
+  try {
+    const rec = await MDB.dbGet('irp', id);
+    if (!rec) return;
+    state.anakId = rec.anak_id;
+    document.getElementById('tanggal').value = rec.tanggal || '';
+
+    // Prioritas
+    document.getElementById('prioritas-pengasuh').value    = rec.prioritas_pengasuh    || '';
+    document.getElementById('prioritas-lapangan').value    = rec.prioritas_lapangan    || '';
+    document.getElementById('prioritas-kesepakatan').value = rec.prioritas_kesepakatan || '';
+
+    // 3 tujuan
+    [1, 2, 3].forEach(t => {
+      document.getElementById(`tujuan-${t}`).value = rec[`tujuan_${t}`] || '';
+      document.getElementById(`cara-${t}`).value   = rec[`cara_${t}`]   || '';
+      document.getElementById(`tempat-${t}`).value = rec[`tempat_${t}`] || '';
+      document.getElementById(`waktu-${t}`).value  = rec[`waktu_${t}`]  || '';
+      document.getElementById(`abc-${t}`).value    = rec[`abc_${t}`]    || '';
+
+      // Restore pihak tags
+      const pihakArr = rec[`pihak_${t}`] || [];
+      pihakArr.forEach(nama => {
+        state.pihak[t].add(nama);
+        const tags = document.querySelectorAll(`#pihak-tags-${t} .pihak-tag`);
+        tags.forEach(tag => { if (tag.textContent === nama) tag.classList.add('selected'); });
+      });
+      rebuildRencanaPihak(t);
+      // Restore rencana texts
+      const rencanaData = rec[`rencana_pihak_${t}`] || {};
+      Object.entries(rencanaData).forEach(([key, val]) => {
+        const el = document.getElementById(key);
+        if (el) el.value = val;
+      });
+    });
+
+    // GPS
+    if (rec.gps) {
+      state.gps = rec.gps;
+      document.getElementById('gps-coords').textContent = MDB.formatGPS(rec.gps);
+      const st = document.getElementById('gps-status');
+      st.textContent = '✓ Lokasi tersimpan'; st.className = 'gps-status ok';
+      document.getElementById('gps-btn').textContent = 'Perbarui';
+    }
+
+    // Photos
+    ['anak','keluarga','lingkungan'].forEach(type => {
+      const fotos = rec[`foto_${type}`] || [];
+      const thumbs = document.getElementById(`foto-${type}-thumbs`);
+      fotos.forEach((dataUrl, i) => {
+        state.photos[type].push({ dataUrl, name: `foto_${i+1}` });
+        addThumb(dataUrl, i, type, thumbs);
+      });
+    });
+
+    document.getElementById('catatan').value = rec.catatan || '';
+  } catch {
+    MDB.showToast('⚠️ Gagal memuat data IRP');
+  }
+}
+
+/* ── Collect rencana per pihak ──────────────────────────── */
+function collectRencanaPihak(t) {
+  const container = document.getElementById(`rencana-pihak-${t}`);
+  const result = {};
+  container.querySelectorAll('textarea').forEach(ta => {
+    if (ta.value.trim()) result[ta.id] = ta.value.trim();
+  });
+  return result;
+}
+
+/* ── Validate ────────────────────────────────────────────── */
+function validate() {
+  if (!state.anakId) {
+    MDB.showToast('⚠️ Pilih anak terlebih dahulu'); return false;
+  }
+  if (!document.getElementById('tanggal').value) {
+    MDB.showToast('⚠️ Tanggal wajib diisi'); return false;
+  }
+  if (!document.getElementById('prioritas-pengasuh').value.trim()) {
+    MDB.showToast('⚠️ Prioritas kesulitan menurut pengasuh wajib diisi'); return false;
+  }
+  if (!document.getElementById('prioritas-kesepakatan').value.trim()) {
+    MDB.showToast('⚠️ Kesepakatan prioritas wajib diisi'); return false;
+  }
+  if (!document.getElementById('tujuan-1').value.trim()) {
+    MDB.showToast('⚠️ Tujuan 1 wajib diisi'); return false;
+  }
+  return true;
+}
+
+/* ── Save ────────────────────────────────────────────────── */
+async function handleSave(status) {
+  if (status === 'aktif' && !validate()) return;
+  if (status === 'draft' && !state.anakId) {
+    MDB.showToast('⚠️ Pilih anak terlebih dahulu'); return;
+  }
+
+  document.getElementById('btn-draft').disabled = true;
+  document.getElementById('btn-save').disabled  = true;
+  MDB.showSync();
+
+  try {
+    const data = {
+      anak_id:    state.anakId,
+      scn_id:     state.session.scn,
+      cbr_worker: state.session.nama,
+      tanggal:    document.getElementById('tanggal').value,
+      // Prioritas
+      prioritas_pengasuh:    document.getElementById('prioritas-pengasuh').value.trim(),
+      prioritas_lapangan:    document.getElementById('prioritas-lapangan').value.trim(),
+      prioritas_kesepakatan: document.getElementById('prioritas-kesepakatan').value.trim(),
+    };
+
+    // 3 tujuan
+    [1, 2, 3].forEach(t => {
+      data[`tujuan_${t}`]       = document.getElementById(`tujuan-${t}`).value.trim();
+      data[`pihak_${t}`]        = Array.from(state.pihak[t]);
+      data[`rencana_pihak_${t}`] = collectRencanaPihak(t);
+      data[`cara_${t}`]         = document.getElementById(`cara-${t}`).value.trim();
+      data[`tempat_${t}`]       = document.getElementById(`tempat-${t}`).value.trim();
+      data[`waktu_${t}`]        = document.getElementById(`waktu-${t}`).value.trim();
+      data[`abc_${t}`]          = document.getElementById(`abc-${t}`).value.trim();
+      // lainnya
+      data[`pihak_${t}_lainnya`] = (document.getElementById(`pihak-${t}-lainnya`)?.value || '').trim();
+    });
+
+    // Photos
+    ['anak','keluarga','lingkungan'].forEach(type => {
+      data[`foto_${type}`] = state.photos[type].map(p => p.dataUrl);
+    });
+
+    data.gps        = state.gps;
+    data.catatan    = document.getElementById('catatan').value.trim();
+    data.status     = status;
+    data.created_at = new Date().toISOString();
+    data.updated_at = new Date().toISOString();
+
+    if (state.editId) data.id = state.editId;
+
+    const savedId = await MDB.dbPut('irp', data);
+    const recId   = state.editId || savedId;
+    await MDB.addToSyncQueue('irp', recId);
+
+    MDB.hideSync();
+    if (status === 'aktif') {
+      MDB.showToast('✅ IRP berhasil disimpan');
+      setTimeout(() => history.back(), 1200);
+    } else {
+      MDB.showToast('📋 Draft IRP tersimpan');
+      if (!state.editId) {
+        state.editId = recId;
+        history.replaceState(null, '', `?id=${recId}`);
+      }
+    }
+  } catch (err) {
+    MDB.hideSync();
+    MDB.showToast('❌ Gagal menyimpan: ' + (err.message || 'Error'));
+    console.error(err);
+  } finally {
+    document.getElementById('btn-draft').disabled = false;
+    document.getElementById('btn-save').disabled  = false;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Buku Harian CBR</title>
+<link rel="manifest" href="./manifest.json">
+<script src="./sw-register.js" defer></script>
+<style>
+:root {
+  --bg:        #F5F5F7;
+  --surface:   #FFFFFF;
+  --border:    #E0E0E0;
+  --fg:        #1A1A1A;
+  --fg-muted:  #6B6B6B;
+  --accent:    #1B6CA8;
+  --accent-dk: #145087;
+  --accent-lt: #EAF3FB;
+  --danger:    #C0392B;
+  --ok:        #1A7A4A;
+  --ok-bg:     #E8F7EF;
+  --warn-bg:   #FFF8E1;
+  --warn-fg:   #7B5800;
+  --radius:    12px;
+  --topbar-h:  56px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111214; --surface: #1C1E21; --border: #2E3035;
+    --fg: #E8E8EA; --fg-muted: #8A8D92;
+    --accent: #5BA3E0; --accent-dk: #4A8CC5; --accent-lt: #162233;
+    --danger: #E05C5C; --ok: #4DB37A; --ok-bg: #0E2A1A;
+    --warn-bg: #2A2200; --warn-fg: #EABF56;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --surface: #1C1E21; --border: #2E3035;
+  --fg: #E8E8EA; --fg-muted: #8A8D92;
+  --accent: #5BA3E0; --accent-dk: #4A8CC5; --accent-lt: #162233;
+  --danger: #E05C5C; --ok: #4DB37A; --ok-bg: #0E2A1A;
+  --warn-bg: #2A2200; --warn-fg: #EABF56;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px; background: var(--bg); color: var(--fg);
+  min-height: 100vh;
+  padding-top: var(--topbar-h);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  padding-left:  max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-h); background: var(--accent); color: #fff;
+  display: flex; align-items: center;
+  padding: 0 max(16px, env(safe-area-inset-left, 0px)); gap: 12px;
+  z-index: 100; padding-top: env(safe-area-inset-top, 0px);
+}
+.topbar-back {
+  background: none; border: none; color: #fff;
+  font-size: 22px; cursor: pointer; padding: 4px 8px;
+  line-height: 1; border-radius: 6px; flex-shrink: 0;
+}
+.topbar-back:hover { background: rgba(255,255,255,.15); }
+.topbar-title { font-size: 17px; font-weight: 600; flex: 1; }
+.topbar-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: rgba(255,255,255,.2); }
+
+.content {
+  max-width: 600px; margin: 0 auto;
+  padding: 16px max(16px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.card-header { padding: 14px 16px 0; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+.card-body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--fg-muted); }
+.field label .req { color: var(--danger); margin-left: 2px; }
+.field input, .field select, .field textarea {
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 15px; font-family: inherit;
+  color: var(--fg); background: var(--bg);
+  transition: border-color .15s; width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field input[readonly] { opacity: .65; cursor: default; }
+.field textarea { resize: vertical; line-height: 1.6; }
+.field-hint { font-size: 12px; color: var(--fg-muted); line-height: 1.4; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; min-width: 0; }
+
+/* Anak info */
+.anak-info-box {
+  display: none; background: var(--ok-bg); border-radius: 8px;
+  padding: 10px 12px; font-size: 13px; color: var(--fg-muted); line-height: 1.6;
+}
+.anak-info-box strong { color: var(--fg); font-size: 14px; }
+.anak-info-box.show { display: block; }
+
+/* Diary entry cards */
+.diary-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.diary-card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; cursor: pointer;
+  background: var(--bg);
+  border-bottom: 1px solid transparent;
+  transition: background .12s;
+}
+.diary-card-header:hover { background: var(--accent-lt); }
+.diary-card-header.has-data { border-bottom-color: var(--border); }
+.diary-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.diary-label { flex: 1; font-size: 14px; font-weight: 600; color: var(--fg); }
+.diary-date-preview { font-size: 12px; color: var(--fg-muted); }
+.diary-chevron { font-size: 11px; color: var(--fg-muted); transition: transform .2s; }
+.diary-card-header.open .diary-chevron { transform: rotate(180deg); }
+.diary-card-body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.diary-card-body.hidden { display: none; }
+
+/* Panduan box */
+.panduan-box {
+  background: var(--warn-bg); border-left: 3px solid var(--warn-fg);
+  border-radius: 0 8px 8px 0; padding: 8px 12px;
+  font-size: 12.5px; color: var(--warn-fg); line-height: 1.5;
+}
+.panduan-box ul { padding-left: 16px; }
+.panduan-box ul li { margin-bottom: 2px; }
+
+/* Progress bar */
+.progress-wrap { margin-bottom: 4px; }
+.progress-label { font-size: 12px; color: var(--fg-muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bar-bg { height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; }
+
+/* Photo widget */
+.photo-upload {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 14px; text-align: center; cursor: pointer;
+  color: var(--fg-muted); font-size: 13px;
+  transition: border-color .15s, color .15s;
+}
+.photo-upload:hover { border-color: var(--accent); color: var(--accent); }
+.photo-upload input[type="file"] { display: none; }
+.photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb-rm {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(0,0,0,.6); color: #fff; border: none;
+  border-radius: 50%; width: 18px; height: 18px;
+  font-size: 12px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* GPS */
+.gps-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gps-btn { padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.gps-btn:hover { background: var(--accent-dk); }
+.gps-btn:disabled { opacity: .6; cursor: default; }
+.gps-status { font-size: 13px; color: var(--fg-muted); }
+.gps-status.ok { color: var(--ok); }
+.gps-coords { font-size: 12.5px; color: var(--fg-muted); font-family: monospace; word-break: break-all; }
+
+/* Submit bar */
+.submit-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 12px max(16px, env(safe-area-inset-left, 0px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 10px; z-index: 90;
+}
+.btn { flex: 1; padding: 13px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; }
+.btn:active { transform: scale(.97); }
+.btn-draft { background: var(--bg); color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-save  { background: var(--accent); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* Toast / Sync */
+#toast {
+  position: fixed; bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #1A1A1A; color: #fff; padding: 10px 20px; border-radius: 20px;
+  font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none; z-index: 200; max-width: calc(100vw - 32px); text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#sync-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff;
+}
+#sync-overlay.show { display: flex; }
+.sync-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-text { font-size: 16px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-back" onclick="history.back()">‹</button>
+  <span class="topbar-title">Buku Harian CBR</span>
+  <span class="topbar-badge" id="topbar-badge">⚡ Offline</span>
+</div>
+
+<div class="content">
+
+  <!-- Info Pendataan -->
+  <div class="card">
+    <div class="card-header">📋 Info Pendataan</div>
+    <div class="card-body">
+      <div class="field-row">
+        <div class="field">
+          <label>SCN</label>
+          <input type="text" id="info-scn" readonly>
+        </div>
+        <div class="field">
+          <label>CBR Worker</label>
+          <input type="text" id="info-cbr" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pilih Anak -->
+  <div class="card">
+    <div class="card-header">👧 Pilih Anak</div>
+    <div class="card-body">
+      <div class="field">
+        <label>Anak <span class="req">*</span></label>
+        <select id="anak-select">
+          <option value="">— Memuat data anak… —</option>
+        </select>
+      </div>
+      <div id="anak-info-box" class="anak-info-box"></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card">
+    <div class="card-header">📊 Progress Diary</div>
+    <div class="card-body">
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Diary terisi</span>
+          <span id="progress-count">0 / 10</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="field-hint">Isi minimal 1 diary untuk menyimpan sebagai draft. Semua 10 diary tidak wajib diisi sekaligus.</div>
+    </div>
+  </div>
+
+  <!-- 10 Diary Entries -->
+  <div id="diary-list"></div>
+
+  <!-- Dokumentasi -->
+  <div class="card">
+    <div class="card-header">📸 Dokumentasi</div>
+    <div class="card-body">
+      <div class="field">
+        <label>Foto Kegiatan Pengisian Diary</label>
+        <div class="photo-upload" onclick="document.getElementById('foto-input').click()">
+          <input type="file" id="foto-input" accept="image/*" multiple>
+          📷 Ketuk untuk tambah foto
+          <div style="font-size:11px;margin-top:3px;opacity:.7">Maks. 10 MB per foto</div>
+        </div>
+        <div class="photo-thumbs" id="foto-thumbs"></div>
+      </div>
+
+      <div class="field">
+        <label>Lokasi (GPS)</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="gps-row">
+            <button class="gps-btn" id="gps-btn">📍 Ambil Lokasi</button>
+            <span class="gps-status" id="gps-status"></span>
+          </div>
+          <div class="gps-coords" id="gps-coords"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Catatan Tambahan</label>
+        <textarea id="catatan" placeholder="Catatan lainnya (opsional)…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="submit-bar">
+  <button class="btn btn-draft" id="btn-draft" onclick="handleSave('draft')">Simpan Draft</button>
+  <button class="btn btn-save"  id="btn-save"  onclick="handleSave('aktif')">✓ Simpan Buku Harian</button>
+</div>
+
+<div id="toast"></div>
+<div id="sync-overlay">
+  <div class="sync-spinner"></div>
+  <div class="sync-text">Menyimpan data…</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+'use strict';
+
+const PANDUAN = '● Hal-hal yang menonjol saat ini (baik & tantangan) ● Apa, Mengapa, Dimana, Bagaimana, Siapa, Kapan ● Aktivitas yang dilakukan di rumah ● Perjanjian yang dibuat dengan petugas CBR ● Pertanyaan untuk kunjungan berikutnya';
+
+const state = {
+  session: null,
+  editId:  null,
+  anakId:  null,
+  gps:     null,
+  photos:  [],
+  // diary[0..9] = { tanggal, teks }
+  diary: Array.from({length:10}, () => ({ tanggal: '', teks: '' })),
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  state.session = MDB.requireLogin();
+  if (!state.session) return;
+
+  MDB.initOfflineIndicator(document.getElementById('topbar-badge'));
+  document.getElementById('info-scn').value = state.session.scn  || '';
+  document.getElementById('info-cbr').value = state.session.nama || '';
+
+  buildDiaryList();
+  initPhoto();
+  MDB.initGPSWidget(
+    document.querySelector('.content .card:last-of-type .field:nth-child(2) > div'),
+    gps => { state.gps = gps; }
+  );
+
+  // GPS widget manual (simpler)
+  document.getElementById('gps-btn').addEventListener('click', takeGPS);
+
+  const params = new URLSearchParams(location.search);
+  const editId = params.get('id');
+  if (editId) {
+    state.editId = parseInt(editId, 10);
+    await loadExisting(state.editId);
+  }
+
+  await loadAnakDropdown();
+});
+
+/* ── Build 10 diary entry cards ──────────────────────── */
+function buildDiaryList() {
+  const container = document.getElementById('diary-list');
+  for (let i = 0; i < 10; i++) {
+    const n = i + 1;
+    const card = document.createElement('div');
+    card.className = 'diary-card';
+    card.innerHTML = `
+      <div class="diary-card-header" id="diary-hdr-${i}" onclick="toggleDiary(${i})">
+        <span class="diary-num">${n}</span>
+        <span class="diary-label">Diary ${n}</span>
+        <span class="diary-date-preview" id="diary-date-preview-${i}"></span>
+        <span class="diary-chevron" id="diary-chv-${i}">▼</span>
+      </div>
+      <div class="diary-card-body hidden" id="diary-body-${i}">
+        <div class="panduan-box">
+          <strong>Panduan:</strong> ${PANDUAN}
+        </div>
+        <div class="field">
+          <label>Tanggal Diary ${n}</label>
+          <input type="date" id="diary-tanggal-${i}" oninput="onDiaryChange(${i})">
+        </div>
+        <div class="field">
+          <label>Catatan Diary ${n}</label>
+          <textarea id="diary-teks-${i}" rows="6" placeholder="Tuliskan catatan harian kunjungan…" oninput="onDiaryChange(${i})"></textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+  // Open diary 1 by default
+  toggleDiary(0);
+}
+
+function toggleDiary(i) {
+  const hdr  = document.getElementById(`diary-hdr-${i}`);
+  const body = document.getElementById(`diary-body-${i}`);
+  const chv  = document.getElementById(`diary-chv-${i}`);
+  const isOpen = !body.classList.contains('hidden');
+  if (isOpen) {
+    body.classList.add('hidden');
+    hdr.classList.remove('open');
+  } else {
+    body.classList.remove('hidden');
+    hdr.classList.add('open');
+    chv.style.transform = 'rotate(180deg)';
+  }
+  if (isOpen) chv.style.transform = '';
+}
+
+function onDiaryChange(i) {
+  const tgl  = document.getElementById(`diary-tanggal-${i}`).value;
+  const teks = document.getElementById(`diary-teks-${i}`).value;
+  state.diary[i] = { tanggal: tgl, teks };
+
+  // Update header date preview
+  const preview = document.getElementById(`diary-date-preview-${i}`);
+  preview.textContent = tgl ? MDB.formatDate(tgl) : '';
+
+  const hdr = document.getElementById(`diary-hdr-${i}`);
+  if (tgl || teks.trim()) hdr.classList.add('has-data');
+  else hdr.classList.remove('has-data');
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const filled = state.diary.filter(d => d.tanggal || d.teks.trim()).length;
+  document.getElementById('progress-count').textContent = `${filled} / 10`;
+  document.getElementById('progress-bar').style.width = `${filled * 10}%`;
+}
+
+/* ── Anak dropdown ─────────────────────────────────── */
+async function loadAnakDropdown() {
+  const sel = document.getElementById('anak-select');
+  try {
+    const semua = await MDB.dbGetAll('anak', 'scn_id', state.session.scn);
+    const aktif = semua.filter(a => a.status !== 'hapus');
+    sel.innerHTML = '';
+    if (!aktif.length) {
+      sel.innerHTML = '<option value="">— Belum ada anak terdaftar —</option>'; return;
+    }
+    sel.innerHTML = '<option value="">— Pilih anak —</option>';
+    aktif.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.nama_anak || `Anak #${a.id}`;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => {
+      const id = parseInt(sel.value, 10);
+      state.anakId = id || null;
+      const anak = aktif.find(a => a.id === id);
+      const box = document.getElementById('anak-info-box');
+      if (!anak) { box.className = 'anak-info-box'; return; }
+      const umur = MDB.hitungUmur(anak.tgl_lahir);
+      box.innerHTML = `<strong>${anak.nama_anak || '—'}</strong><br>${anak.jenis_kelamin || '—'} · ${umur != null ? umur + ' tahun' : '—'} · ${anak.kampung || '—'}`;
+      box.className = 'anak-info-box show';
+    });
+    if (state.editId && state.anakId) {
+      sel.value = state.anakId;
+      sel.dispatchEvent(new Event('change'));
+    }
+  } catch {
+    sel.innerHTML = '<option value="">— Gagal memuat anak —</option>';
+  }
+}
+
+/* ── GPS ───────────────────────────────────────────── */
+function takeGPS() {
+  const btn = document.getElementById('gps-btn');
+  const st  = document.getElementById('gps-status');
+  const coords = document.getElementById('gps-coords');
+  btn.disabled = true;
+  st.textContent = '⏳ Mengambil lokasi…'; st.className = 'gps-status';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      state.gps = { lat: pos.coords.latitude, lng: pos.coords.longitude, alt: pos.coords.altitude, accuracy: pos.coords.accuracy, ts: new Date().toISOString() };
+      st.textContent = '✓ Lokasi diperoleh'; st.className = 'gps-status ok';
+      coords.textContent = `${state.gps.lat.toFixed(6)}, ${state.gps.lng.toFixed(6)} ± ${Math.round(state.gps.accuracy)}m`;
+      btn.disabled = false; btn.textContent = '🔄 Perbarui';
+    },
+    () => { st.textContent = '⚠️ Gagal ambil lokasi'; btn.disabled = false; },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+/* ── Photo ─────────────────────────────────────────── */
+function initPhoto() {
+  const input  = document.getElementById('foto-input');
+  const thumbs = document.getElementById('foto-thumbs');
+  input.addEventListener('change', async () => {
+    for (const file of Array.from(input.files || [])) {
+      if (file.size > 10 * 1024 * 1024) { MDB.showToast(`⚠️ ${file.name} terlalu besar`); continue; }
+      try {
+        const compressed = await MDB.compressPhoto(file);
+        const dataUrl    = await MDB.fileToDataUrl(compressed);
+        state.photos.push({ dataUrl });
+        addThumb(dataUrl, state.photos.length - 1, thumbs);
+      } catch { MDB.showToast('⚠️ Gagal proses foto'); }
+    }
+    input.value = '';
+  });
+}
+function addThumb(dataUrl, idx, thumbsEl) {
+  const div = document.createElement('div');
+  div.className = 'photo-thumb';
+  div.innerHTML = `<img src="${dataUrl}" alt="foto"><button class="photo-thumb-rm">×</button>`;
+  div.querySelector('.photo-thumb-rm').addEventListener('click', e => {
+    e.stopPropagation();
+    state.photos.splice(idx, 1);
+    const thumbs = document.getElementById('foto-thumbs');
+    thumbs.innerHTML = '';
+    state.photos.forEach((p, i) => addThumb(p.dataUrl, i, thumbs));
+  });
+  thumbsEl.appendChild(div);
+}
+
+/* ── Load existing ─────────────────────────────────── */
+async function loadExisting(id) {
+  try {
+    const rec = await MDB.dbGet('buku_harian', id);
+    if (!rec) return;
+    state.anakId = rec.anak_id;
+
+    // Diary entries
+    (rec.diary || []).forEach((d, i) => {
+      if (i >= 10) return;
+      state.diary[i] = { tanggal: d.tanggal || '', teks: d.teks || '' };
+      document.getElementById(`diary-tanggal-${i}`).value = d.tanggal || '';
+      document.getElementById(`diary-teks-${i}`).value    = d.teks    || '';
+      const preview = document.getElementById(`diary-date-preview-${i}`);
+      if (d.tanggal) preview.textContent = MDB.formatDate(d.tanggal);
+      if (d.tanggal || (d.teks||'').trim()) {
+        document.getElementById(`diary-hdr-${i}`).classList.add('has-data');
+      }
+    });
+    updateProgress();
+
+    // GPS
+    if (rec.gps) {
+      state.gps = rec.gps;
+      document.getElementById('gps-status').textContent = '✓ Lokasi tersimpan';
+      document.getElementById('gps-status').className = 'gps-status ok';
+      document.getElementById('gps-coords').textContent = `${rec.gps.lat.toFixed(6)}, ${rec.gps.lng.toFixed(6)} ± ${Math.round(rec.gps.accuracy)}m`;
+      document.getElementById('gps-btn').textContent = '🔄 Perbarui';
+    }
+
+    // Photos
+    const thumbs = document.getElementById('foto-thumbs');
+    (rec.fotos || []).forEach((dataUrl, i) => {
+      state.photos.push({ dataUrl });
+      addThumb(dataUrl, i, thumbs);
+    });
+
+    document.getElementById('catatan').value = rec.catatan || '';
+  } catch { MDB.showToast('⚠️ Gagal memuat data'); }
+}
+
+/* ── Save ──────────────────────────────────────────── */
+async function handleSave(status) {
+  if (!state.anakId) { MDB.showToast('⚠️ Pilih anak terlebih dahulu'); return; }
+
+  const diaryFilled = state.diary.filter(d => d.tanggal || d.teks.trim());
+  if (diaryFilled.length === 0) { MDB.showToast('⚠️ Isi minimal 1 diary'); return; }
+
+  if (status === 'aktif') {
+    // Validasi: setiap diary yang diisi harus punya tanggal
+    const missing = state.diary.filter(d => d.teks.trim() && !d.tanggal);
+    if (missing.length) { MDB.showToast('⚠️ Setiap diary yang diisi harus punya tanggal'); return; }
+  }
+
+  document.getElementById('btn-draft').disabled = true;
+  document.getElementById('btn-save').disabled  = true;
+  MDB.showSync();
+
+  try {
+    const data = {
+      anak_id:    state.anakId,
+      scn_id:     state.session.scn,
+      cbr_worker: state.session.nama,
+      diary:      state.diary,
+      fotos:      state.photos.map(p => p.dataUrl),
+      gps:        state.gps,
+      catatan:    document.getElementById('catatan').value.trim(),
+      status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    if (state.editId) data.id = state.editId;
+
+    const savedId = await MDB.dbPut('buku_harian', data);
+    const recId   = state.editId || savedId;
+    await MDB.addToSyncQueue('buku_harian', recId);
+
+    MDB.hideSync();
+    if (status === 'aktif') {
+      MDB.showToast('✅ Buku Harian tersimpan');
+      setTimeout(() => history.back(), 1200);
+    } else {
+      MDB.showToast('📋 Draft tersimpan');
+      if (!state.editId) {
+        state.editId = recId;
+        history.replaceState(null, '', `?id=${recId}`);
+      }
+    }
+  } catch (err) {
+    MDB.hideSync();
+    MDB.showToast('❌ Gagal menyimpan: ' + (err.message || 'Error'));
+    console.error(err);
+  } finally {
+    document.getElementById('btn-draft').disabled = false;
+    document.getElementById('btn-save').disabled  = false;
+  }
+}
+</script>
+</body>
+</html>

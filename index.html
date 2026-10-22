@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#006B5E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Logbook STEP BEN">
+<link rel="manifest" href="manifest.json">
+<title>Logbook STEP BEN</title>
+<link rel="manifest" href="./manifest.json">
+<script src="./sw-register.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Index-specific styles ─────────────────────────────── */
+
+/* LOGIN SCREEN */
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-teal-600);
+  position: relative;
+  overflow: hidden;
+}
+.login-screen::before {
+  content: '';
+  position: absolute;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  top: -80px; right: -80px;
+  pointer-events: none;
+}
+.login-screen::after {
+  content: '';
+  position: absolute;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+  bottom: 120px; left: -60px;
+  pointer-events: none;
+}
+
+.login-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px 24px;
+  position: relative;
+  z-index: 1;
+}
+.login-logo {
+  width: 72px; height: 72px;
+  background: rgba(255,255,255,.18);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,.24);
+}
+.login-title {
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  letter-spacing: -.3px;
+}
+.login-subtitle {
+  font-size: 13px;
+  color: rgba(255,255,255,.72);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.login-card {
+  background: var(--color-surface);
+  border-radius: 24px 24px 0 0;
+  padding: 28px 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.12);
+}
+.login-card-title {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 20px;
+}
+
+.pin-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+.pin-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+  transition: background .2s;
+}
+.pin-dot.filled { background: var(--color-teal-600); }
+
+.pin-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.pin-key {
+  height: 56px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-surface-raised);
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background .12s, transform .08s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.pin-key:active { background: var(--color-teal-50); transform: scale(.96); }
+.pin-key.del   { font-size: 14px; color: var(--color-text-muted); }
+.pin-key.go    {
+  background: var(--color-teal-600);
+  color: #fff;
+  font-size: 14px;
+}
+.pin-key.go:active { background: var(--color-teal-700); }
+.pin-key.go:disabled { opacity: .4; }
+
+/* SCN selector pills */
+.scn-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.scn-pill {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: var(--color-surface);
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.scn-pill.selected {
+  background: var(--color-teal-50);
+  border-color: var(--color-teal-600);
+  color: var(--color-teal-700);
+}
+
+/* ── HOME SCREEN ───────────────────────────────────────── */
+.home-screen { display: none; }
+
+.home-header {
+  background: var(--color-teal-600);
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 20px;
+  color: #fff;
+}
+.home-greeting {
+  font-size: 12px;
+  color: rgba(255,255,255,.72);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.home-name {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.home-scn {
+  font-size: 12px;
+  color: rgba(255,255,255,.72);
+}
+.home-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.home-queue-badge {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Module grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 20px 16px;
+}
+.module-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 16px 14px 14px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+  color: inherit;
+}
+.module-card:active { transform: scale(.97); box-shadow: var(--shadow-sm); }
+.module-card.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+.module-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.module-info { flex: 1; min-width: 0; }
+.module-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.module-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+.module-coming {
+  font-size: 10px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-surface-raised);
+  border-radius: 6px;
+  padding: 2px 7px;
+  align-self: flex-start;
+}
+
+/* Module icon colors */
+.ic-teal   { background: rgba(0,107,94,.1); }
+.ic-blue   { background: rgba(24,119,242,.1); }
+.ic-amber  { background: rgba(235,168,27,.1); }
+.ic-green  { background: rgba(59,173,110,.1); }
+.ic-purple { background: rgba(107,79,187,.1); }
+.ic-rose   { background: rgba(220,53,69,.1); }
+.ic-orange { background: rgba(229,103,37,.1); }
+.ic-slate  { background: rgba(100,116,139,.1); }
+
+/* Sync bar */
+.sync-bar {
+  margin: 0 16px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sync-bar-icon { font-size: 18px; }
+.sync-bar-text { flex: 1; }
+.sync-bar-label {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.sync-bar-sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.sync-now-btn {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-teal-700);
+  background: var(--color-teal-50);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── CHILD LIST SCREEN ─────────────────────────────────── */
+.list-screen { display: none; }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 0;
+}
+.search-input-wrap {
+  flex: 1;
+  position: relative;
+}
+.search-input-wrap .search-icon {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text);
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+}
+.search-input:focus { border-color: var(--color-teal-600); }
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-pills::-webkit-scrollbar { display: none; }
+.filter-pill {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--color-border);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-pill.active {
+  background: var(--color-teal-600);
+  border-color: var(--color-teal-600);
+  color: #fff;
+}
+
+.child-list { padding: 12px 16px; }
+.child-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity .12s;
+}
+.child-item:active { opacity: .7; }
+.child-item:last-child { border-bottom: none; }
+.child-avatar {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  background: var(--color-teal-50);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-teal-100, rgba(0,107,94,.15));
+}
+.child-info { flex: 1; min-width: 0; }
+.child-name {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.child-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.child-chevron { color: var(--color-text-muted); font-size: 12px; }
+
+.add-anak-btn {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  right: 20px;
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: var(--color-teal-600);
+  border: none;
+  font-size: 24px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,107,94,.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .1s;
+}
+.add-anak-btn:active { transform: scale(.94); }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+.empty-state-desc { font-size: 13px; line-height: 1.5; }
+
+/* logout button */
+.logout-btn {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  left: 20px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  z-index: 50;
+  display: none;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 1: LOGIN
+════════════════════════════════════════════════════════ -->
+<div id="screen-login" class="login-screen">
+
+  <div class="login-hero">
+    <div class="login-logo">📋</div>
+    <div class="login-title">Logbook STEP BEN</div>
+    <div class="login-subtitle">Sistem Pencatatan CBR<br>Yayasan Ayo Indonesia · NLR</div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-card-title">Masuk ke akun Anda</div>
+
+    <!-- Nama -->
+    <div class="form-group">
+      <label class="form-label">Nama Petugas CBR</label>
+      <input id="login-nama" class="form-input" type="text"
+             placeholder="Cth: Jack Roka" autocomplete="off"
+             autocapitalize="words" spellcheck="false">
+    </div>
+
+    <!-- SCN -->
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Pilih SCN</label>
+      <div class="scn-pills" id="scn-pills">
+        <div class="scn-pill" data-value="SCN Manggarai">Manggarai</div>
+        <div class="scn-pill" data-value="SCN Kupang">Kupang</div>
+        <div class="scn-pill" data-value="SCN Timor Tengah Selatan">TTS</div>
+        <div class="scn-pill" data-value="SCN Banyuwangi">Banyuwangi</div>
+        <div class="scn-pill" data-value="SCN Jember">Jember</div>
+        <div class="scn-pill" data-value="SCN Situbondo">Situbondo</div>
+        <div class="scn-pill" data-value="SCN Palu">Palu</div>
+        <div class="scn-pill" data-value="SCN Sigi">Sigi</div>
+      </div>
+    </div>
+
+    <!-- PIN -->
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">PIN (4 digit)</label>
+      <div class="pin-row" id="pin-row">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+
+      <div class="pin-numpad">
+        <button class="pin-key" data-num="1">1</button>
+        <button class="pin-key" data-num="2">2</button>
+        <button class="pin-key" data-num="3">3</button>
+        <button class="pin-key" data-num="4">4</button>
+        <button class="pin-key" data-num="5">5</button>
+        <button class="pin-key" data-num="6">6</button>
+        <button class="pin-key" data-num="7">7</button>
+        <button class="pin-key" data-num="8">8</button>
+        <button class="pin-key" data-num="9">9</button>
+        <button class="pin-key del" id="pin-del">⌫</button>
+        <button class="pin-key" data-num="0">0</button>
+        <button class="pin-key go" id="pin-go" disabled>Masuk</button>
+      </div>
+    </div>
+
+    <p style="font-size:11px;color:var(--color-text-muted);text-align:center;margin-top:16px;line-height:1.5">
+      Data tersimpan lokal di perangkat ini.<br>Sinkronisasi otomatis saat terhubung internet.
+    </p>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 2: HOME
+════════════════════════════════════════════════════════ -->
+<div id="screen-home" class="home-screen">
+
+  <!-- Header -->
+  <div class="home-header">
+    <div class="home-greeting">Selamat datang,</div>
+    <div class="home-name" id="home-nama">—</div>
+    <div class="home-scn" id="home-scn">—</div>
+    <div class="home-meta">
+      <span class="badge badge-offline" id="online-badge-home">⚡ Offline</span>
+      <span class="home-queue-badge" id="home-queue-badge" style="display:none">
+        ⏳ <span id="home-queue-count">0</span> data menunggu
+      </span>
+    </div>
+  </div>
+
+  <!-- Sync bar -->
+  <div class="sync-bar" id="sync-bar" style="display:none">
+    <div class="sync-bar-icon">☁️</div>
+    <div class="sync-bar-text">
+      <div class="sync-bar-label" id="sync-bar-label">Data siap disinkron</div>
+      <div class="sync-bar-sub" id="sync-bar-sub">Tekan untuk mengirim ke server</div>
+    </div>
+    <button class="sync-now-btn" id="sync-now-btn">Sinkron</button>
+  </div>
+
+  <!-- Module grid -->
+  <div class="module-grid">
+
+    <!-- 1 — Daftar Anak (full width, primary) -->
+    <div class="module-card full-width" onclick="showScreen('list')">
+      <div class="module-icon ic-teal">👧</div>
+      <div class="module-info">
+        <div class="module-name">Daftar Anak Dampingan</div>
+        <div class="module-desc">Tambah atau buka profil anak, akses semua formulir</div>
+      </div>
+      <div class="child-chevron">›</div>
+    </div>
+
+    <!-- 2 — Observasi ICF -->
+    <div class="module-card" onclick="quickNav('observasi')">
+      <div class="module-icon ic-blue">🔍</div>
+      <div class="module-info">
+        <div class="module-name">Observasi ICF</div>
+        <div class="module-desc">Asesmen 4 domain ICF</div>
+      </div>
+    </div>
+
+    <!-- 3 — Buku Harian -->
+    <div class="module-card" onclick="quickNav('buku-harian')">
+      <div class="module-icon ic-amber">📔</div>
+      <div class="module-info">
+        <div class="module-name">Buku Harian</div>
+        <div class="module-desc">Kunjungan & kegiatan harian</div>
+      </div>
+    </div>
+
+    <!-- 4 — IRP -->
+    <div class="module-card" onclick="quickNav('irp')">
+      <div class="module-icon ic-green">🎯</div>
+      <div class="module-info">
+        <div class="module-name">IRP</div>
+        <div class="module-desc">Perencanaan rehabilitasi</div>
+      </div>
+    </div>
+
+    <!-- 5 — Evaluasi -->
+    <div class="module-card" onclick="showEvalMenu()">
+      <div class="module-icon ic-purple">📊</div>
+      <div class="module-info">
+        <div class="module-name">Evaluasi</div>
+        <div class="module-desc">Tengah & akhir program</div>
+      </div>
+    </div>
+
+    <!-- 6 — SEL (coming soon) -->
+    <div class="module-card">
+      <div class="module-icon ic-rose">🌳</div>
+      <div class="module-info">
+        <div class="module-name">SEL</div>
+        <div class="module-desc">Check My Tree</div>
+      </div>
+      <div class="module-coming">Segera</div>
+    </div>
+
+    <!-- 7 — MYP (coming soon) -->
+    <div class="module-card">
+      <div class="module-icon ic-orange">⭐</div>
+      <div class="module-info">
+        <div class="module-name">MYP</div>
+        <div class="module-desc">Pengembangan keterampilan</div>
+      </div>
+      <div class="module-coming">Segera</div>
+    </div>
+
+    <!-- 8 — PPDP KUBIK (coming soon) -->
+    <div class="module-card">
+      <div class="module-icon ic-slate">🧭</div>
+      <div class="module-info">
+        <div class="module-name">PPDP KUBIK</div>
+        <div class="module-desc">Rencana pengembangan diri</div>
+      </div>
+      <div class="module-coming">Segera</div>
+    </div>
+
+    <!-- 9 — Rujukan (coming soon) -->
+    <div class="module-card">
+      <div class="module-icon ic-rose">🔒</div>
+      <div class="module-info">
+        <div class="module-name">Rujukan</div>
+        <div class="module-desc">SRHR/SGBV · akses terbatas</div>
+      </div>
+      <div class="module-coming">Segera</div>
+    </div>
+
+  </div>
+
+  <div style="height: 80px"></div><!-- bottom nav spacer -->
+
+  <!-- Bottom nav -->
+  <nav class="bottomnav">
+    <div class="nav-item active" onclick="/* already home */">
+      <div class="nav-dot"></div>
+      <span>🏠</span>
+      <span>Beranda</span>
+    </div>
+    <div class="nav-item" onclick="showScreen('list')">
+      <span>👧</span>
+      <span>Anak</span>
+    </div>
+    <div class="nav-item" onclick="showProfile()">
+      <span>👤</span>
+      <span>Profil</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 3: DAFTAR ANAK
+════════════════════════════════════════════════════════ -->
+<div id="screen-list" class="app list-screen">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('home')">‹</button>
+    <span class="topbar-title">Daftar Anak Dampingan</span>
+    <span class="badge badge-offline" id="online-badge-list" style="font-size:10px">⚡</span>
+  </div>
+
+  <div class="content">
+    <!-- Search -->
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" class="search-input"
+               type="search" placeholder="Cari nama anak…"
+               oninput="filterAnak()">
+      </div>
+    </div>
+
+    <!-- Filter pills -->
+    <div class="filter-pills">
+      <div class="filter-pill active" data-filter="semua" onclick="setFilter(this, 'semua')">Semua</div>
+      <div class="filter-pill" data-filter="aktif"  onclick="setFilter(this, 'aktif')">Aktif</div>
+      <div class="filter-pill" data-filter="selesai" onclick="setFilter(this, 'selesai')">Selesai</div>
+      <div class="filter-pill" data-filter="draft"  onclick="setFilter(this, 'draft')">Draft</div>
+    </div>
+
+    <!-- Child list -->
+    <div class="child-list" id="child-list">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- FAB: tambah anak -->
+  <button class="add-anak-btn" onclick="tambahAnak()" title="Tambah Anak Baru">＋</button>
+
+  <!-- Logout -->
+  <button class="logout-btn" id="logout-btn" onclick="doLogout()">↩ Keluar</button>
+
+  <!-- Bottom nav -->
+  <nav class="bottomnav">
+    <div class="nav-item" onclick="showScreen('home')">
+      <span>🏠</span>
+      <span>Beranda</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-dot"></div>
+      <span>👧</span>
+      <span>Anak</span>
+    </div>
+    <div class="nav-item" onclick="showProfile()">
+      <span>👤</span>
+      <span>Profil</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Toast & sync overlay -->
+<div id="toast"></div>
+<div id="sync-overlay">
+  <div class="sync-spinner"></div>
+  <div class="sync-text">Menyimpan…</div>
+  <div class="sync-sub">Data tersimpan offline</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+'use strict';
+
+/* ── PIN logic ─────────────────────────────────────────── */
+let pin = '';
+const PIN_LEN = 4;
+
+document.querySelectorAll('.pin-key[data-num]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (pin.length >= PIN_LEN) return;
+    pin += btn.dataset.num;
+    updatePinDots();
+  });
+});
+document.getElementById('pin-del').addEventListener('click', () => {
+  pin = pin.slice(0, -1);
+  updatePinDots();
+});
+document.getElementById('pin-go').addEventListener('click', doLogin);
+
+function updatePinDots() {
+  for (let i = 0; i < PIN_LEN; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pin.length);
+  }
+  document.getElementById('pin-go').disabled = pin.length < PIN_LEN ||
+    !document.getElementById('login-nama').value.trim() ||
+    !selectedSCN;
+}
+
+document.getElementById('login-nama').addEventListener('input', updatePinDots);
+
+/* SCN pills */
+let selectedSCN = '';
+document.querySelectorAll('.scn-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.scn-pill').forEach(p => p.classList.remove('selected'));
+    pill.classList.add('selected');
+    selectedSCN = pill.dataset.value;
+    updatePinDots();
+  });
+});
+
+/* ── Login ─────────────────────────────────────────────── */
+const VALID_PIN = '1234'; // TODO: ganti dengan autentikasi proper
+
+async function doLogin() {
+  const nama = document.getElementById('login-nama').value.trim();
+  if (!nama || !selectedSCN || pin.length !== PIN_LEN) {
+    MDB.showToast('⚠️ Lengkapi nama, SCN, dan PIN');
+    return;
+  }
+  if (pin !== VALID_PIN) {
+    MDB.showToast('⚠️ PIN salah. Coba lagi.');
+    pin = '';
+    updatePinDots();
+    return;
+  }
+
+  MDB.setSession({ nama, scn: selectedSCN, ts: new Date().toISOString() });
+  await initApp();
+}
+
+/* ── Session restore ───────────────────────────────────── */
+async function initApp() {
+  const session = MDB.getSession();
+  if (!session) { showScreen('login'); return; }
+
+  document.getElementById('home-nama').textContent = session.nama;
+  document.getElementById('home-scn').textContent  = session.scn;
+
+  MDB.initOfflineIndicator(document.getElementById('online-badge-home'));
+  MDB.initOfflineIndicator(document.getElementById('online-badge-list'));
+
+  await checkSyncQueue();
+  await renderChildList();
+
+  showScreen('home');
+}
+
+/* ── Screens ───────────────────────────────────────────── */
+function showScreen(name) {
+  ['login', 'home', 'list'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.style.display = (s === name) ? '' : 'none';
+  });
+  if (name === 'list') {
+    document.getElementById('logout-btn').style.display = 'block';
+  }
+}
+
+/* ── Quick nav to other pages ──────────────────────────── */
+function quickNav(page) {
+  // Cek apakah ada anak yang dipilih di session
+  const session = MDB.getSession();
+  if (!session) return;
+  // Untuk sekarang, minta user pilih anak dulu lewat daftar
+  MDB.showToast('ℹ️ Pilih anak terlebih dahulu dari Daftar Anak');
+  showScreen('list');
+}
+
+function showEvalMenu() {
+  MDB.showToast('ℹ️ Pilih anak terlebih dahulu, lalu akses Evaluasi dari profil anak');
+  showScreen('list');
+}
+
+function showProfile() {
+  const session = MDB.getSession();
+  if (!session) return;
+  MDB.showToast('👤 ' + session.nama + ' · SCN ' + session.scn, 3000);
+}
+
+/* ── Logout ────────────────────────────────────────────── */
+function doLogout() {
+  if (!confirm('Keluar dari aplikasi? Data draft lokal tetap tersimpan di perangkat ini.')) return;
+  MDB.clearSession();
+  pin = ''; selectedSCN = '';
+  document.getElementById('login-nama').value = '';
+  document.querySelectorAll('.scn-pill').forEach(p => p.classList.remove('selected'));
+  updatePinDots();
+  showScreen('login');
+}
+
+/* ── Child list ────────────────────────────────────────── */
+let allAnak = [];
+let currentFilter = 'semua';
+
+async function renderChildList() {
+  try {
+    const session = MDB.getSession();
+    allAnak = await MDB.dbGetAll('anak', 'scn_id', session ? session.scn : null);
+    // Fallback: ambil semua jika scn_id index belum ada data yang cocok
+    if (!allAnak.length) allAnak = await MDB.dbGetAll('anak');
+  } catch { allAnak = []; }
+  renderFilteredList();
+}
+
+function filterAnak() { renderFilteredList(); }
+
+function setFilter(el, filter) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = filter;
+  renderFilteredList();
+}
+
+function renderFilteredList() {
+  const q     = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  const list  = document.getElementById('child-list');
+  const session = MDB.getSession();
+
+  let items = allAnak.filter(a => {
+    const nama = (a.nama_lengkap || '').toLowerCase();
+    const matchQ = !q || nama.includes(q);
+    const matchF = currentFilter === 'semua' || (a.status || 'aktif') === currentFilter;
+    return matchQ && matchF;
+  });
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-title">${q ? 'Anak tidak ditemukan' : 'Belum ada data anak'}</div>
+        <div class="empty-state-desc">${q ? 'Coba kata kunci lain' : 'Tekan ＋ untuk menambahkan anak dampingan pertama'}</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(a => {
+    const umur = MDB.hitungUmur(a.tgl_lahir);
+    const umurTxt = umur != null ? umur + ' th' : '';
+    const statusClass = {
+      aktif:   'badge-teal',
+      selesai: 'badge-green',
+      draft:   'badge-grey',
+    }[a.status || 'aktif'] || 'badge-grey';
+    const statusTxt = {
+      aktif: 'Aktif', selesai: 'Selesai', draft: 'Draft'
+    }[a.status || 'aktif'] || 'Draft';
+
+    const gender = a.jenis_kelamin === 'P' ? '👧' : (a.jenis_kelamin === 'L' ? '👦' : '🧒');
+    const meta = [a.scn, umurTxt, a.disabilitas].filter(Boolean).join(' · ');
+
+    return `
+    <div class="child-item" onclick="bukaAnak(${a.id})">
+      <div class="child-avatar">${gender}</div>
+      <div class="child-info">
+        <div class="child-name">${escHtml(a.nama_lengkap || 'Tanpa nama')}</div>
+        <div class="child-meta">
+          <span class="badge ${statusClass}">${statusTxt}</span>
+          ${meta ? '<span style="margin-left:6px">' + escHtml(meta) + '</span>' : ''}
+        </div>
+      </div>
+      <div class="child-chevron">›</div>
+    </div>`;
+  }).join('');
+}
+
+function bukaAnak(id) {
+  // Simpan id anak yang sedang aktif di session
+  const session = MDB.getSession();
+  if (session) {
+    session.anak_id = id;
+    MDB.setSession(session);
+  }
+  window.location.href = 'profil.html?id=' + id;
+}
+
+function tambahAnak() {
+  window.location.href = 'profil.html?baru=1';
+}
+
+/* ── Sync queue ────────────────────────────────────────── */
+async function checkSyncQueue() {
+  try {
+    const queue = await MDB.dbGetAll('sync_queue');
+    const pending = queue.filter(q => q.status === 'pending');
+    const badge   = document.getElementById('home-queue-badge');
+    const count   = document.getElementById('home-queue-count');
+    const bar     = document.getElementById('sync-bar');
+
+    if (pending.length > 0) {
+      count.textContent = pending.length;
+      if (badge) badge.style.display = '';
+      if (bar)   bar.style.display   = '';
+    } else {
+      if (badge) badge.style.display = 'none';
+      if (bar)   bar.style.display   = 'none';
+    }
+  } catch {}
+}
+
+document.getElementById('sync-now-btn').addEventListener('click', async () => {
+  if (!navigator.onLine) {
+    MDB.showToast('⚠️ Tidak ada koneksi internet');
+    return;
+  }
+  MDB.showSync('Menyinkron data…', 'Mengirim ke server Supabase…');
+  // TODO: implementasi sync Supabase di sini
+  setTimeout(() => {
+    MDB.hideSync();
+    MDB.showToast('✅ Sinkronisasi selesai (coming soon)');
+  }, 1500);
+});
+
+/* ── Utilities ─────────────────────────────────────────── */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ── Boot ──────────────────────────────────────────────── */
+(async function boot() {
+  await MDB.openDB();
+
+  // Cek apakah sudah login
+  const session = MDB.getSession();
+  if (session) {
+    await initApp();
+  } else {
+    showScreen('login');
+  }
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('sw.js');
+    } catch (e) {
+      console.warn('SW not registered:', e);
+    }
+  }
+})();
+</script>
+</body>
+</html>
