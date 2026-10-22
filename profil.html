@@ -359,16 +359,29 @@
   <!-- 0. Meta (auto-filled) -->
   <div class="section-card" id="card-meta">
     <div class="section-title">Info Pendataan</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">SCN</label>
-        <input class="form-input" id="f-scn" readonly>
-      </div>
-      <div class="form-group">
-        <label class="form-label">CBR Worker</label>
-        <input class="form-input" id="f-cbr" readonly>
-      </div>
+
+    <div class="form-group">
+      <label class="form-label">SCN <span class="req">*</span></label>
+      <select class="form-select" id="f-scn">
+        <option value="">— Pilih SCN —</option>
+        <option value="Manggarai">Manggarai</option>
+        <option value="Kupang">Kupang</option>
+        <option value="TTS">TTS</option>
+        <option value="Banyuwangi">Banyuwangi</option>
+        <option value="Jember">Jember</option>
+        <option value="Situbondo">Situbondo</option>
+        <option value="Palu">Palu</option>
+        <option value="Sigi">Sigi</option>
+      </select>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">CBR Worker <span class="req">*</span></label>
+      <select class="form-select" id="f-cbr">
+        <option value="">— Pilih SCN terlebih dahulu —</option>
+      </select>
+    </div>
+
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Tanggal Input</label>
@@ -708,6 +721,51 @@
 
 <script src="app.js"></script>
 <script>
+/* ─── Data CBR Worker per SCN (sumber: PDF KoboToolbox, halaman 1-77)
+   Manggarai: nama CBR worker REAL (halaman 1-10)
+   SCN lain: placeholder (halaman 11-77 berisi kode, bukan nama real)
+──────────────────────────────────────────────────────────── */
+const CBR_WORKERS = {
+  'Manggarai': [
+    'Jack Roka',
+    'Laurensius Herbianto',
+    'Leonardus Mawardi',
+    'Magdalena Sabe',
+    'Elfrida Suryati',
+    'Maria Diana Banut',
+    'Miseldis Halmida',
+    'Stanis J Ngalu',
+  ],
+  'Kupang': [
+    'CBR kpg 1','CBR kpg 2','CBR kpg 3','CBR kpg 4',
+    'CBR kpg 5','CBR kpg 6','CBR kpg 7','CBR kpg 8',
+  ],
+  'TTS': [
+    'CBR tts 1','CBR tts 2','CBR tts 3','CBR tts 4',
+    'CBR tts 5','CBR tts 6','CBR tts 7','CBR tts 8',
+  ],
+  'Banyuwangi': [
+    'CBR bwi 1','CBR bwi 2','CBR bwi 3','CBR bwi 4',
+    'CBR bwi 5','CBR bwi 6','CBR bwi 7','CBR bwi 8',
+  ],
+  'Jember': [
+    'CBR jbr 1','CBR jbr 2','CBR jbr 3','CBR jbr 4',
+    'CBR jbr 5','CBR jbr 6','CBR jbr 7','CBR jbr 8',
+  ],
+  'Situbondo': [
+    'CBR sbd 1','CBR sbd 2','CBR sbd 3','CBR sbd 4',
+    'CBR sbd 5','CBR sbd 6','CBR sbd 7','CBR sbd 8',
+  ],
+  'Palu': [
+    'CBR plu 1','CBR plu 2','CBR plu 3','CBR plu 4',
+    'CBR plu 5','CBR plu 6','CBR plu 7','CBR plu 8',
+  ],
+  'Sigi': [
+    'CBR sgi 1','CBR sgi 2','CBR sgi 3','CBR sgi 4',
+    'CBR sgi 5','CBR sgi 6','CBR sgi 7','CBR sgi 8',
+  ],
+};
+
 /* ─── State ──────────────────────────────────────────────── */
 const state = {
   anakId:    null,   // null = new, number = edit existing
@@ -717,15 +775,48 @@ const state = {
   cantrilA:  null,
 };
 
+/* ─── CBR Worker dropdown update ─────────────────────────── */
+function updateCBRDropdown(scnVal, selectedCBR) {
+  const sel = document.getElementById('f-cbr');
+  sel.innerHTML = '';
+  if (!scnVal || !CBR_WORKERS[scnVal]) {
+    sel.innerHTML = '<option value="">— Pilih SCN terlebih dahulu —</option>';
+    return;
+  }
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— Pilih CBR Worker —';
+  sel.appendChild(placeholder);
+  CBR_WORKERS[scnVal].forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === selectedCBR) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
 /* ─── Init ───────────────────────────────────────────────── */
 async function init() {
   const session = MDB.requireLogin();
   if (!session) return;
 
-  // Fill session-based fields
-  document.getElementById('f-scn').value = session.scn  || '—';
-  document.getElementById('f-cbr').value = session.nama || '—';
   document.getElementById('f-tgl-input').value = MDB.today();
+
+  // Pre-fill SCN from session if available, then populate CBR list
+  const sessionSCN = session.scn || '';
+  const sessionCBR = session.nama || '';
+  const scnSel = document.getElementById('f-scn');
+
+  if (sessionSCN && scnSel.querySelector(`option[value="${sessionSCN}"]`)) {
+    scnSel.value = sessionSCN;
+    updateCBRDropdown(sessionSCN, sessionCBR);
+  }
+
+  // SCN change → reload CBR dropdown
+  scnSel.addEventListener('change', () => {
+    updateCBRDropdown(scnSel.value, '');
+  });
 
   // Check if editing existing record
   const params  = new URLSearchParams(location.search);
@@ -741,7 +832,7 @@ async function init() {
     document.getElementById('f-waktu-kunjungan').value = local;
   }
 
-  // Init offline indicator (no badge in this page, just a toast on offline)
+  // Init offline indicator
   window.addEventListener('offline', () => MDB.showToast('⚡ Offline — data disimpan lokal'));
   window.addEventListener('online',  () => MDB.showToast('🟢 Kembali online'));
 }
@@ -755,6 +846,14 @@ async function loadExisting(id) {
   document.getElementById('f-status').value = rec.status || '—';
   document.getElementById('anak-id-wrap').style.display = '';
   document.getElementById('anak-id-val').textContent = id;
+
+  // Fill SCN & CBR Worker dropdowns
+  if (rec.scn) {
+    const scnSel = document.getElementById('f-scn');
+    scnSel.value = rec.scn;
+    updateCBRDropdown(rec.scn, rec.cbr_worker || '');
+    document.getElementById('f-cbr').value = rec.cbr_worker || '';
+  }
 
   // Fill fields
   setVal('f-nama',            rec.nama);
@@ -962,8 +1061,8 @@ function collectData(isDraft) {
 
   const data = {
     // Meta
-    scn:          document.getElementById('f-scn').value,
-    cbr_worker:   document.getElementById('f-cbr').value,
+    scn:          document.getElementById('f-scn').value || null,
+    cbr_worker:   document.getElementById('f-cbr').value || null,
     tgl_input:    MDB.today(),
     status:       isDraft ? 'draft' : 'aktif',
     updated_at:   new Date().toISOString(),
@@ -1030,8 +1129,10 @@ function collectData(isDraft) {
 
 /* ─── Validate ───────────────────────────────────────────── */
 function validate(data) {
-  if (!data.nama) { MDB.showToast('⚠️ Nama anak wajib diisi'); return false; }
-  if (!data.jenis_kelamin) { MDB.showToast('⚠️ Jenis kelamin wajib dipilih'); return false; }
+  if (!data.scn)          { MDB.showToast('⚠️ SCN wajib dipilih'); return false; }
+  if (!data.cbr_worker)   { MDB.showToast('⚠️ CBR Worker wajib dipilih'); return false; }
+  if (!data.nama)         { MDB.showToast('⚠️ Nama anak wajib diisi'); return false; }
+  if (!data.jenis_kelamin){ MDB.showToast('⚠️ Jenis kelamin wajib dipilih'); return false; }
   if (!data.status_pengasuh) { MDB.showToast('⚠️ Status pengasuh wajib dipilih'); return false; }
   if (!data.ragam_disabilitas.length) { MDB.showToast('⚠️ Ragam disabilitas wajib dipilih'); return false; }
   if (!data.level_disabilitas) { MDB.showToast('⚠️ Level disabilitas wajib dipilih'); return false; }
