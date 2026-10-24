@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <style>
 /* ── profil-specific ──────────────────────────────────── */
 .page-topbar {
@@ -402,6 +404,14 @@
     <div class="section-title">Identitas Anak</div>
 
     <div class="form-group">
+      <label class="form-label">Status Anak <span class="req">*</span></label>
+      <div class="pill-group" id="pills-status-anak">
+        <div class="pill" data-value="Anak Baru">🆕 Anak Baru</div>
+        <div class="pill" data-value="Anak Lama">📋 Anak Lama</div>
+      </div>
+    </div>
+
+    <div class="form-group">
       <label class="form-label">Nama Anak <span class="req">*</span></label>
       <input class="form-input" id="f-nama" type="text" placeholder="Nama lengkap anak" autocomplete="off">
     </div>
@@ -768,11 +778,12 @@ const CBR_WORKERS = {
 
 /* ─── State ──────────────────────────────────────────────── */
 const state = {
-  anakId:    null,   // null = new, number = edit existing
-  gps:       null,
-  photos:    [],
-  cantrilP:  null,
-  cantrilA:  null,
+  anakId:     null,   // null = new, number = edit existing
+  supabaseId: null,   // UUID dari tabel pendataan_awal di Supabase
+  gps:        null,
+  photos:     [],
+  cantrilP:   null,
+  cantrilA:   null,
 };
 
 /* ─── CBR Worker dropdown update ─────────────────────────── */
@@ -874,6 +885,7 @@ async function loadExisting(id) {
   setVal('f-waktu-kunjungan', rec.waktu_kunjungan);
 
   // Pills
+  selectPill('pills-status-anak', rec.status_anak);
   selectPill('pills-jk', rec.jenis_kelamin);
   selectPill('pills-status-pengasuh', rec.status_pengasuh);
   selectPill('pills-level',   rec.level_disabilitas);
@@ -1005,6 +1017,7 @@ function show(id, visible) {
 }
 
 /* ─── Wire up pills ──────────────────────────────────────── */
+initPills('pills-status-anak');
 initPills('pills-jk');
 initPills('pills-status-pengasuh', updateConditionalGroups);
 initPills('pills-level');
@@ -1068,6 +1081,7 @@ function collectData(isDraft) {
     updated_at:   new Date().toISOString(),
 
     // Identitas
+    status_anak:  getPillVal('pills-status-anak'),
     nama,
     tgl_lahir:    document.getElementById('f-tgl-lahir').value || null,
     jenis_kelamin: getPillVal('pills-jk'),
@@ -1131,6 +1145,7 @@ function collectData(isDraft) {
 function validate(data) {
   if (!data.scn)          { MDB.showToast('⚠️ SCN wajib dipilih'); return false; }
   if (!data.cbr_worker)   { MDB.showToast('⚠️ CBR Worker wajib dipilih'); return false; }
+  if (!data.status_anak)  { MDB.showToast('⚠️ Status anak wajib dipilih'); return false; }
   if (!data.nama)         { MDB.showToast('⚠️ Nama anak wajib diisi'); return false; }
   if (!data.jenis_kelamin){ MDB.showToast('⚠️ Jenis kelamin wajib dipilih'); return false; }
   if (!data.status_pengasuh) { MDB.showToast('⚠️ Status pengasuh wajib dipilih'); return false; }
@@ -1146,8 +1161,51 @@ async function saveData(isDraft) {
 
   MDB.showSync('Menyimpan data…');
   try {
-    const id = await MDB.dbPut('anak', data);
-    await MDB.addToSyncQueue('anak', id || state.anakId);
+    // 1. Simpan ke IndexedDB (offline-first)
+    const localId = await MDB.dbPut('anak', data);
+    await MDB.addToSyncQueue('anak', localId || state.anakId);
+
+    // 2. Sync ke Supabase jika online
+    if (navigator.onLine) {
+      try {
+        const sb = MDB.getSupabase();
+        if (sb) {
+          const session = MDB.getSession();
+          const supaData = {
+            scn:               data.scn,
+            cbr_worker:        data.cbr_worker,
+            status_anak:       data.status_anak,
+            nama_anak:         data.nama,
+            tgl_lahir:         data.tgl_lahir || null,
+            jenis_kelamin:     data.jenis_kelamin,
+            kampung:           data.kampung || null,
+            desa:              data.desa || null,
+            nama_pengasuh:     data.nama_pengasuh || null,
+            status_pengasuh:   data.status_pengasuh || null,
+            ragam_disabilitas: data.ragam_disabilitas || [],
+            level_disabilitas: data.level_disabilitas || null,
+            epilepsi:          data.epilepsi || null,
+            pengobatan:        data.pengobatan || null,
+            terapi:            data.terapi || null,
+            cantril_pengasuh:  data.cantril_pengasuh || null,
+            cantril_anak:      data.cantril_anak || null,
+            catatan:           data.catatan || null,
+            status:            data.status,
+            user_id:           (await sb.auth.getUser()).data.user?.id || null,
+          };
+          if (state.supabaseId) {
+            await sb.from('pendataan_awal').update(supaData).eq('id', state.supabaseId);
+          } else {
+            const { data: inserted } = await sb.from('pendataan_awal').insert(supaData).select('id').single();
+            if (inserted?.id) state.supabaseId = inserted.id;
+          }
+        }
+      } catch (sbErr) {
+        console.warn('[Supabase] Gagal sync pendataan_awal:', sbErr.message);
+        // Tidak gagalkan save — data sudah aman di IndexedDB
+      }
+    }
+
     MDB.hideSync();
     MDB.showToast(isDraft ? '✓ Draft disimpan' : '✓ Data anak tersimpan!');
     setTimeout(() => history.back(), 1000);
